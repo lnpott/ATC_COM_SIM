@@ -40,6 +40,16 @@ export class ManualSearch {
   }
 
   static async load(indexPath = new URL('../atc-simulator-index.json', import.meta.url)) {
+    const url = indexPath instanceof URL ? indexPath : new URL(indexPath, import.meta.url);
+    let contents;
+    if (url.protocol === 'file:') {
+      const { readFile } = await import('node:fs/promises');
+      contents = await readFile(url, 'utf8');
+    } else {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Falha ao carregar índice: HTTP ${response.status}.`);
+      contents = await response.text();
+    }
     const contents = await readFile(indexPath, 'utf8');
     return new ManualSearch(JSON.parse(contents));
   }

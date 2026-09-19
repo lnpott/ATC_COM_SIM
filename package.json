@@ -4,6 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:index": "node scripts/build-index.mjs",
+    "check:index": "node scripts/build-index.mjs --check",
+    "test": "node --test",
+    "validate": "node scripts/validate-search.mjs && npm run check:index",
+    "audit": "npm test && npm run validate",
+    "start": "node server.mjs"
     "test": "node --test",
     "validate": "node scripts/validate-search.mjs"
   },

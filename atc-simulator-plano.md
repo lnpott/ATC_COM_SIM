@@ -4,7 +4,7 @@
 
 Documento escrito como *briefing de entrega*: qualquer IA ou desenvolvedor deve conseguir pegar este arquivo isolado, sem contexto anterior, e executar do início ao fim.
 
-Data: 19/09/2026 · Autor do projeto: Lucas · Status: planejamento, nada implementado ainda.
+Data: 19/09/2026 · Autor do projeto: Lucas · Status: versão funcional local das Fases 1 a 5 implementada e auditada; validações externas permanecem pendentes.
 
 ---
 
@@ -181,31 +181,130 @@ Alinhada ao que o Lucas já usa, para reduzir atrito:
 
 ## 9. Roadmap
 
+### 9.1 Registro de execução verificado no repositório
+
+Este registro descreve somente o que pode ser comprovado pelos arquivos versionados. A prova de
+conceito de voz foi informada como concluída antes desta etapa, mas seu código não está neste
+repositório; por isso ela não é marcada como verificada aqui.
+
+**Concluído e verificável:**
+
+- o corpus está versionado em `atc-simulator-chunks.json`, com 374 trechos e IDs únicos;
+- o índice lexical BM25 está versionado em `atc-simulator-index.json` e alinhado por posição com o
+  corpus;
+- `src/search.js` implementa a busca isolada da interface e da geração de autorizações, com entrada
+  composta por `texto`, `idioma` e `fase_de_voo`;
+- a busca filtra idioma e fase, preserva trechos bilíngues e de fase geral, e retorna entre cinco e
+  oito candidatos com procedência e score;
+- `reference/search-queries.v1.json` registra consultas para solo, decolagem, rota, aproximação,
+  pouso, emergência e ausência de cobertura;
+- `test/search.test.js` e `scripts/validate-search.mjs` verificam recuperação, filtros, contrato de
+  saída, IDs e alinhamento entre corpus e índice.
+
+**Ainda não concluído ou não verificável neste repositório:**
+
+- os PDFs de origem, seus nomes exatos e suas contagens de páginas não estão versionados; os códigos
+  e versões existentes são metadados derivados e ainda precisam ser conferidos nos PDFs;
+- não há pipeline reproduzível de extração e chunking diretamente dos PDFs; a geração do índice a
+  partir do corpus, por outro lado, já é reproduzível por `scripts/build-index.mjs`;
+- não foram implementados embeddings nem busca vetorial: a implementação atual é lexical (BM25);
+- as contas/chamadas dos provedores de LLM e seus limites não podem ser auditados a partir deste
+  repositório e nenhum provedor externo está configurado;
+- existe uma interface web funcional com controlador determinístico local; ela não substitui a futura
+  validação de um provedor de LLM, mas permite testar o fluxo sem custo ou chaves;
+- STT/TTS possuem adaptadores para Web Speech API, enquanto os módulos de domínio não fazem chamadas
+  externas por projeto.
+
+### 9.2 Próximo passo seguro
+
+Antes de conectar a busca ao simulador, executar uma revisão de aceitação da Fase 2 com os PDFs de
+origem: conferir manualmente os artigos esperados das consultas de referência, registrar nome,
+código, versão e páginas dos documentos e definir um critério explícito de cobertura mínima. Uma
+consulta sem evidência lexical hoje ainda devolve candidatos com `score` zero para cumprir o contrato
+de quantidade; esses candidatos **não devem** ser usados para gerar uma autorização. Depois dessa
+revisão, o próximo incremento deve ser o extrator reproduzível dos PDFs. A geração do índice a partir
+do corpus já está automatizada, e qualquer integração externa deve manter os testes de regressão
+aprovados.
+
+### 9.3 Checklist por fase
+
 **Fase 0 — Preparação**
 - [ ] Confirmar arquivos, códigos e número de páginas dos manuais.
 - [ ] Criar contas gratuitas: Groq e Google AI Studio. Testar os limites reais com uma chamada antes de assumir os números publicados.
 
 **Fase 1 — Prova de conceito de voz (1 tela)**
-- [ ] Botão PTT → `SpeechRecognition` → texto na tela → chamada ao LLM → `speechSynthesis`. Sem RAG, sem estado. Só provar que o loop de voz fecha.
+- [x] Tela versionada com PTT → `SpeechRecognition` → normalização/busca/controlador local → `speechSynthesis`.
+- [ ] Repetir a prova com provedor real de LLM depois de validar limites e configurar proxy seguro.
 
 **Fase 2 — Base de conhecimento**
-- [ ] Pipeline de extração e chunking dos PDFs.
-- [ ] Embeddings + índice.
-- [ ] Busca funcionando isoladamente, testada com perguntas cujas respostas você já conhece.
+- [ ] Pipeline reproduzível de extração e chunking dos PDFs (os artefatos existem, mas o extrator não).
+- [x] Corpus e índice lexical BM25 estáticos, alinhados e com IDs únicos.
+- [x] Geração reproduzível do índice BM25 a partir do corpus e verificação contra o arquivo versionado.
+- [ ] Embeddings e busca vetorial (não são usados pela implementação atual).
+- [x] Busca funcionando isoladamente, sem conexão com a geração de autorizações.
+- [x] Consultas de referência versionadas e cobertas por testes unitários e validação estática.
+- [ ] Conferência dos resultados de referência diretamente nos PDFs de origem.
 
 **Fase 3 — Simulador real**
-- [ ] Máquina de estados do cenário.
-- [ ] Prompt de sistema do controlador, com a regra de ouro.
-- [ ] Módulo de normalização de fraseologia (seção 6).
-- [ ] Primeiro cenário completo: tráfego de aeródromo VFR.
+- [x] Máquina de estados com transições e atualizações permitidas explicitamente.
+- [x] Grounding do controlador com a regra de ouro, recusa sem cobertura e validação das fontes.
+- [x] Controlador local só autoriza quando o artigo específico da intenção está entre os resultados.
+- [x] Módulo determinístico de normalização de fraseologia para entrada e expansão para TTS.
+- [x] Cenário-base de tráfego de aeródromo VFR em português e sessão integradora independente de LLM.
+- [x] Exercitar o cenário completo na interface local com Web Speech e fallback de texto.
+- [ ] Repetir o cenário com um provedor real de LLM atrás de proxy, sem expor chaves no cliente.
 
 **Fase 4 — Treino**
-- [ ] Cotejamento avaliado e modo explicação.
-- [ ] Demais cenários, inglês, relatório de sessão.
+- [x] Cotejamento avaliado e explicação com documento, artigo e ID de origem.
+- [x] Cenários versionados VFR em português/inglês, partida IFR e emergência.
+- [x] Relatório de sessão com score e erros recorrentes.
+- [ ] Validar pedagogicamente os critérios de cotejamento com instrutor e manuais de origem.
 
 **Fase 5 — Refinamento**
-- [ ] Filtro de áudio de rádio, aeronaves de tráfego simultâneas.
-- [ ] Reavaliar se STT/TTS gratuitos ainda bastam ou se vale migrar para pago.
+- [x] Cadeia Web Audio com banda de rádio/compressor e fila que serializa transmissões concorrentes.
+- [x] Interface responsiva com seleção de cenário, frequência, PTT/texto, evidências e score.
+- [x] Reavaliação técnica registrada: manter Web Speech API na primeira validação integrada, pois o
+  repositório ainda não contém evidência comparável que justifique custo ou migração.
+- [ ] Medir STT/TTS no navegador com usuários e fraseologia real antes de confirmar a decisão final.
+
+### 9.4 Auditoria das Fases 2 a 5
+
+Auditoria executada sobre os artefatos versionados:
+
+- `npm test` cobre busca, filtros, ausência de cobertura, normalização, máquina de estados, grounding,
+  fontes específicas por intenção, cotejamento, relatório, fila de transmissões e sessão integradora;
+- `npm run validate` confere corpus/índice, consultas de referência e reprodução exata do índice;
+- o gerador `scripts/build-index.mjs` falha com IDs duplicados e possui modo `--check`, evitando que
+  alterações no corpus deixem um índice obsoleto;
+- `src/grounding.js` impede resposta quando todos os scores são zero e rejeita IDs de fontes que não
+  tenham sido recuperados;
+- `src/state-machine.js` limita transições e campos mutáveis; atualizações do modelo não são aplicadas
+  diretamente ao estado sem validação;
+- `src/simulator.js` integra as camadas determinísticas, mas mantém STT, LLM e TTS fora do núcleo;
+- `src/speech.js` encapsula STT/TTS gratuitos do navegador, com seleção explícita de `pt-BR`/`en-US`
+  e falha controlada quando a API não está disponível;
+- não foram adicionadas chaves, contas pagas ou dependências externas.
+
+**Conclusão da auditoria:** os núcleos programáticos previstos nas Fases 2 a 5 estão implementados e
+testáveis. Não se considera concluída a validação operacional do produto: faltam os PDFs para auditoria
+documental, o extrator PDF e testes reais de navegador/provedor. Esses itens não
+podem ser marcados como concluídos somente por testes unitários e constituem os próximos gates antes
+de publicação para usuários.
+
+### 9.5 Entrega funcional local
+
+- `index.html`, `web/app.js` e `web/styles.css` formam uma interface responsiva sem framework ou
+  dependências de terceiros;
+- `server.mjs` serve somente arquivos do repositório, bloqueia travessia de diretório e permite iniciar
+  o produto com `npm start` em `http://127.0.0.1:4173`;
+- a aplicação carrega o índice pelo navegador, inicia cenários versionados, aceita texto ou PTT,
+  normaliza a transmissão, recupera oito trechos e exibe a fonte usada;
+- o fluxo real do índice é testado para táxi, decolagem, aproximação, pouso e emergência, exigindo os
+  artigos 125, 126, 114, 132 e 64 do MCA 100-16, respectivamente;
+- `src/controller.js` detecta a intenção e exige o artigo de fraseologia correspondente antes de
+  responder; evidência genérica com score alto não autoriza resposta;
+- o fluxo atual é totalmente local e determinístico, portanto funcional sem chave e sem custo. A
+  adoção futura de LLM deve ocorrer atrás de proxy e continuar subordinada ao mesmo validador de fontes.
 
 ---
 
