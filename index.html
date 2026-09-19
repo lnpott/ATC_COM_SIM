@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#08131d">
+  <title>ATC COM SIM</title>
+  <link rel="stylesheet" href="./web/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">A</span><div><strong>ATC COM SIM</strong><small>Treino de fonia documentado</small></div></div>
+    <div id="system-status" class="status"><span></span> Carregando índice…</div>
+  </header>
+  <main>
+    <section class="hero">
+      <div><p class="eyebrow">SIMULAÇÃO · VHF 118.10</p><h1>Pratique cada chamada.<br><em>Com base no manual.</em></h1><p class="subtitle">O controlador só responde quando encontra cobertura documental. Cada transmissão mantém a fonte visível para auditoria.</p></div>
+      <div class="flight-strip"><small>INDICATIVO</small><strong id="strip-call-sign">PT-ABC</strong><dl><div><dt>FASE</dt><dd id="strip-phase">SOLO</dd></div><div><dt>PISTA</dt><dd id="strip-runway">18</dd></div><div><dt>QNH</dt><dd id="strip-qnh">1015</dd></div></dl></div>
+    </section>
+
+    <section class="workspace">
+      <aside class="panel controls">
+        <div class="panel-heading"><span>01</span><h2>Cenário</h2></div>
+        <label>Exercício<select id="scenario"><option value="vfr_local_pt">VFR local · Português</option><option value="vfr_local_en">VFR local · English</option><option value="ifr_partida_pt">Partida IFR · Português</option><option value="emergencia_motor_pt">Emergência de motor</option></select></label>
+        <div class="frequency"><small>FREQUÊNCIA ATIVA</small><strong id="frequency">SOLO</strong><span>118.10 MHz</span></div>
+        <div class="tips"><strong>Chamadas sugeridas</strong><button data-prompt="Solo, Papa Tango Alfa Bravo, solicito instruções de táxi">Solicitar táxi</button><button data-prompt="Torre, Papa Tango Alfa Bravo, pronto para partida">Pronto para partida</button><button data-prompt="Mayday, falha de motor">Declarar emergência</button></div>
+        <button id="new-session" class="secondary">↻ Reiniciar sessão</button>
+      </aside>
+
+      <section class="panel radio-panel">
+        <div class="panel-heading"><span>02</span><h2>Frequência</h2><button id="sound-toggle" class="icon-button" title="Alternar voz">◉ VOZ</button></div>
+        <div id="transcript" class="transcript" aria-live="polite"><div class="empty"><span>⌁</span><strong>Frequência livre</strong><p>Use uma sugestão ou pressione o PTT para iniciar.</p></div></div>
+        <form id="transmission-form" class="composer">
+          <textarea id="transmission" rows="2" placeholder="Digite uma transmissão ou use o microfone…" required></textarea>
+          <button type="button" id="ptt" class="ptt"><span>●</span><strong>PTT</strong><small>PRESSIONE PARA FALAR</small></button>
+          <button type="submit" class="send">Transmitir ↗</button>
+        </form>
+      </section>
+
+      <aside class="panel evidence-panel">
+        <div class="panel-heading"><span>03</span><h2>Evidência</h2></div>
+        <div id="evidence" class="evidence-empty"><span>◎</span><p>As fontes da última resposta aparecerão aqui.</p></div>
+        <div class="score-card"><small>DESEMPENHO DA SESSÃO</small><strong id="score">100</strong><span>/ 100</span><div><i id="score-bar"></i></div><p id="score-detail">Nenhum cotejamento avaliado.</p></div>
+      </aside>
+    </section>
+  </main>
+  <footer><span>BASE DOCUMENTAL <strong>MCA 100-16 · ICA 100-12</strong></span><span>Nenhuma autorização é gerada sem fonte recuperada.</span></footer>
+  <script type="module" src="./web/app.js"></script>
+</body>
+</html>
