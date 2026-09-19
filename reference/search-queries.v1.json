@@ -1,0 +1,44 @@
+{
+  "versao": 1,
+  "descricao": "Consultas de referência da busca documental, independentes da geração de autorizações.",
+  "consultas": [
+    {
+      "nome": "solo-taxi",
+      "entrada": { "texto": "solicito autorização para táxi", "idioma": "pt", "fase_de_voo": "solo" },
+      "ids_esperados": ["MCA-100-16-art0125", "ICA-100-12-art0079"]
+    },
+    {
+      "nome": "decolagem-partida",
+      "entrada": { "texto": "pronto para decolagem", "idioma": "pt", "fase_de_voo": "decolagem" },
+      "ids_esperados": ["MCA-100-16-art0126"]
+    },
+    {
+      "nome": "rota-nivel-posicao",
+      "entrada": { "texto": "subida para nível de voo e reporte posição", "idioma": "pt", "fase_de_voo": "rota" },
+      "ids_esperados": ["MCA-100-16-art0091", "MCA-100-16-art0106"]
+    },
+    {
+      "nome": "aproximacao-instrumentos",
+      "entrada": { "texto": "autorizado aproximação ILS", "idioma": "pt", "fase_de_voo": "aproximacao" },
+      "ids_esperados": ["MCA-100-16-art0114"]
+    },
+    {
+      "nome": "pouso-reta-final",
+      "entrada": { "texto": "final pista pouso autorizado", "idioma": "pt", "fase_de_voo": "pouso" },
+      "ids_esperados": ["MCA-100-16-art0132"]
+    },
+    {
+      "nome": "emergencia-motor",
+      "entrada": { "texto": "mayday falha de motor pouso forçado", "idioma": "pt", "fase_de_voo": "emergencia" },
+      "ids_esperados": ["MCA-100-16-art0064"],
+      "artigos_esperados": ["Art. 64"]
+    },
+    {
+      "nome": "sem-cobertura-documental",
+      "entrada": { "texto": "xenobiologia quântica marciana", "idioma": "pt", "fase_de_voo": "rota" },
+      "sem_cobertura": true,
+      "ids_esperados": [],
+      "artigos_esperados": []
+    }
+  ]
+}
