@@ -10,6 +10,8 @@
     "validate": "node scripts/validate-search.mjs && npm run check:index",
     "audit": "npm test && npm run validate",
     "start": "node server.mjs"
+    "test": "node --test",
+    "validate": "node scripts/validate-search.mjs"
   },
   "engines": {
     "node": ">=20"

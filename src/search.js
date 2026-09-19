@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 const LANGUAGES = new Set(['pt', 'en']);
 const PHASES = new Set([
   'geral', 'solo', 'decolagem', 'rota', 'aproximacao', 'pouso', 'emergencia',
@@ -48,6 +50,7 @@ export class ManualSearch {
       if (!response.ok) throw new Error(`Falha ao carregar índice: HTTP ${response.status}.`);
       contents = await response.text();
     }
+    const contents = await readFile(indexPath, 'utf8');
     return new ManualSearch(JSON.parse(contents));
   }
 
