@@ -24,7 +24,7 @@ export function createInterpretTransmissionHandler(env = process.env, options = 
       const providerName = (env.LLM_PROVIDER || 'auto-free').toLowerCase()
       if (providerName !== 'auto-free') throw Object.assign(new Error('unsupported_provider'), { code: 'configuration' })
       const policy = costPolicy(env)
-      const provider = options.provider ?? createAutoFreeProvider({ env, timeoutMs: Number(env.LLM_TIMEOUT_MS) || 8_000 })
+      const provider = options.provider ?? createAutoFreeProvider({ env, timeoutMs: Number(env.LLM_TIMEOUT_MS) || 15_000 })
       const result = await interpretSemantically(body, provider)
       response.statusCode = 200
       response.end(JSON.stringify({ ...result, interpretationMode: 'llm', zeroCostMode: policy.zeroCostMode, allowPaidApi: policy.allowPaidApi }))

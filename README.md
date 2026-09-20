@@ -129,7 +129,7 @@ nunca autoriza, seleciona documento ou altera estado.
 ### Fallback e erros
 
 Quota/429 não é repetida em avalanche: o resolver avança para o próximo candidato
-gratuito. Timeout, schema, provider e STT têm códigos distintos. Se todos falharem,
+gratuito. O timeout por candidato é limitado a 15 segundos; schema, provider e STT têm códigos distintos. Se todos falharem,
 o pipeline determinístico continua com grounding e estado obrigatórios; isso não é
 reportado como “documento ausente”.
 

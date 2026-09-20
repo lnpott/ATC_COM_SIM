@@ -3,7 +3,7 @@ import { configuredCandidates } from '../../server/model-registry.js'
 import { costPolicy, isProviderAllowed } from '../../server/cost-policy.js'
 import { LlmProviderError } from './provider.js'
 
-export function createAutoFreeProvider({ env = process.env, fetchImpl = fetch, timeoutMs = 8_000 } = {}) {
+export function createAutoFreeProvider({ env = process.env, fetchImpl = fetch, timeoutMs = 15_000 } = {}) {
   const policy = costPolicy(env)
   const candidates = configuredCandidates(env).filter(({ provider, id }) => {
     if (provider === 'groq') return Boolean(env.GROQ_API_KEY) && policy.groqFreeTierConfirmed && isProviderAllowed(provider, id, env)
