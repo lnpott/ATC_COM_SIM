@@ -48,7 +48,7 @@ de chave não comprova o tier.
 
 A configuração completa, sem valores secretos, está em `.env.example`. A ordem LLM
 é Groq fixo somente se o Free tier for confirmado, OpenRouter fixo `:free` primário,
-fixo `:free` secundário, `openrouter/free` e parser determinístico. Gemini não é
+fixos `:free` subsequentes, `openrouter/free` e parser determinístico. Gemini não é
 usado. TTS permanece `SpeechSynthesis` do browser.
 
 ## Implantação na Vercel

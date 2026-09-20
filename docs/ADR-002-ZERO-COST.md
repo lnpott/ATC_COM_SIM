@@ -22,6 +22,8 @@ A sequência LLM é:
 Groq fixo (somente tier confirmado)
 → qwen/qwen3.8-27b:free
 → google/gemma-4-26b-a4b-it:free
+→ nex-agi/nex-n2.5-pro:free
+→ nvidia/nemotron-3-super-120b-a12b:free
 → openrouter/free
 → fallback determinístico
 ```

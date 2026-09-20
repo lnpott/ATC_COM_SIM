@@ -3,6 +3,7 @@ import test from 'node:test'
 import { INTERPRETATION_SCHEMA, validateInterpretation } from '../src/llm/schemas.js'
 import { interpretSemantically, limitedSessionContext, SEMANTIC_SYSTEM_INSTRUCTION, toPipelineInterpretation } from '../src/llm/semantic-interpreter.js'
 import { createSimulationState, recordTransmission } from '../src/state-machine.js'
+import { normalizeCallsign } from '../src/callsign.js'
 
 function semantic(overrides = {}) {
   const entity = (value, source = 'explicit') => value == null ? null : { value, source, confidence: 0.97, spoken: value }
@@ -81,4 +82,9 @@ test('20 casos held-out atravessam schema e adaptação sem depender de frase li
     const result = await interpretSemantically({ rawTranscript: `held-out ${intent}`, normalizedTranscript: intent, language, sessionContext: {}, scenarioContext: {} }, provider)
     assert.notEqual(toPipelineInterpretation(result.interpretation, intent).intent, undefined)
   }
+})
+
+test('normalizador especializado preserva forma falada e não inventa indicativo incompleto', () => {
+  assert.deepEqual(normalizeCallsign('Papa Tango Alpha Bravo Charlie'), { raw: 'papa tango alpha bravo charlie', normalized: 'PTABC', spoken: 'papa tango alpha bravo charlie', confidence: 0.98, source: 'explicit' })
+  assert.equal(normalizeCallsign('Papa Tango Alfa Bravo'), null)
 })

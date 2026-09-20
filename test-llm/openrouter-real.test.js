@@ -20,6 +20,7 @@ test('OpenRouter real usa somente modelo free validado', { skip: !enabled, timeo
   assert.equal(result.provider, 'openrouter'); assert.equal(result.freeValidated, true); assert.equal(result.usage.costChargedExpected, 0)
   assert.ok(result.requestedModel.endsWith(':free') || result.requestedModel === 'openrouter/free')
   assert.equal(result.interpretation.intent, 'taxi_request'); assert.equal(result.interpretation.callsign?.value, 'PTABC'); assert.equal(result.interpretation.flightRules?.value, 'VFR')
+  assert.equal(result.interpretation.position?.value, '2'); assert.equal(result.interpretation.atis?.value, 'BRAVO'); assert.match(result.interpretation.destinationOrSector?.value ?? '', /norte/i)
 })
 
 test('Groq LLM real é skip explícito sem Free tier confirmado', { skip: process.env.GROQ_FREE_TIER_CONFIRMED !== 'true' }, () => {
