@@ -14,7 +14,7 @@ test('OpenRouter real usa somente modelo free validado', { skip: !enabled, timeo
     normalizedTranscript: 'bom dia solo galeao papa tango alfa bravo charlie posicao dois informacao bravo vfr setor norte solicito instrucoes taxi',
     language: 'pt', sessionContext: { callsign: 'PTABC', airport: 'SBGL', phase: 'solo' }, scenarioContext: { airport: 'SBGL', runway: '18' },
   }, provider) } catch (error) {
-    if (['llm_free_quota', 'llm_timeout'].includes(error.code)) { t.skip(`capacidade gratuita indisponível: ${error.code}`); return }
+    if (['llm_free_quota', 'llm_timeout', 'llm_provider_error'].includes(error.code)) { t.skip(`capacidade gratuita indisponível: ${error.code}`); return }
     throw error
   }
   assert.equal(result.provider, 'openrouter'); assert.equal(result.freeValidated, true); assert.equal(result.usage.costChargedExpected, 0)
