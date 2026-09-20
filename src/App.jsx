@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { generateReply } from './services/generateReply.js'
+import { createRecognitionSession, speakTransmission } from './speech.js'
 
 const copy = {
   'pt-BR': {
@@ -39,13 +40,7 @@ export default function App() {
 
   function speak(text) {
     return new Promise((resolve) => {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = language
-      utterance.rate = 0.94
-      utterance.onend = resolve
-      utterance.onerror = resolve
-      window.speechSynthesis.cancel()
-      window.speechSynthesis.speak(utterance)
+      speakTransmission(text, { idioma: language, scope: window, onEnd: resolve, onError: resolve })
     })
   }
 
@@ -70,36 +65,22 @@ export default function App() {
     if (!speechSupported || status !== 'idle') return
     setError('')
     setReply('')
-    const recognition = new Recognition()
-    recognition.lang = language
-    recognition.interimResults = true
-    recognition.continuous = false
-    recognitionRef.current = recognition
-    let finalText = ''
-
-    recognition.onstart = () => setStatus('listening')
-    recognition.onresult = (event) => {
-      let preview = ''
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        preview += event.results[index][0].transcript
-        if (event.results[index].isFinal) finalText += event.results[index][0].transcript
-      }
-      setTranscript(finalText || preview)
-    }
-    recognition.onerror = (event) => {
-      if (event.error !== 'aborted') setError(t.permission)
-      setStatus('idle')
-    }
-    recognition.onend = () => {
-      recognitionRef.current = null
-      if (finalText.trim()) handleResult(finalText.trim())
-      else setStatus('idle')
-    }
-    recognition.start()
+    let submitted = false
+    const session = createRecognitionSession({
+      idioma: language,
+      scope: window,
+      onInterim: setTranscript,
+      onFinal: (text) => { submitted = true; handleResult(text); },
+      onError: () => { setError(t.permission); setStatus('idle'); },
+      onEnd: () => { recognitionRef.current = null; if (!submitted) setStatus('idle'); },
+    })
+    recognitionRef.current = session
+    setStatus('listening')
+    session.start()
   }
 
   function stopListening() {
-    if (status === 'listening') recognitionRef.current?.stop()
+    recognitionRef.current?.stop()
   }
 
   const labels = { idle: t.ptt, listening: t.listening, processing: t.processing, speaking: t.speaking }

@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-
 const LANGUAGES = new Set(['pt', 'en']);
 const PHASES = new Set([
   'geral', 'solo', 'decolagem', 'rota', 'aproximacao', 'pouso', 'emergencia',
@@ -43,14 +41,13 @@ export class ManualSearch {
     const url = indexPath instanceof URL ? indexPath : new URL(indexPath, import.meta.url);
     let contents;
     if (url.protocol === 'file:') {
-      const { readFile } = await import('node:fs/promises');
+      const { readFile } = await import(/* @vite-ignore */ 'node:fs/promises');
       contents = await readFile(url, 'utf8');
     } else {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Falha ao carregar índice: HTTP ${response.status}.`);
       contents = await response.text();
     }
-    const contents = await readFile(indexPath, 'utf8');
     return new ManualSearch(JSON.parse(contents));
   }
 

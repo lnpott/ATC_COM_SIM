@@ -16,7 +16,7 @@ export function createSimulationState({ aeronave, cenario, fase = 'solo', freque
     throw new TypeError('aeronave.indicativo e cenario.aerodromo são obrigatórios.');
   }
   if (!FLIGHT_PHASES.includes(fase)) throw new RangeError(`fase inválida: ${fase}.`);
-  return structuredClone({ aeronave, cenario, fase, frequencia, historico: [] });
+  return structuredClone({ aeronave, cenario, fase, frequencia, contexto: {}, historico: [] });
 }
 
 export function applyStateUpdate(state, update) {
@@ -28,6 +28,14 @@ export function applyStateUpdate(state, update) {
     next.fase = update.fase;
   }
   if (update.frequencia) next.frequencia = update.frequencia;
+  if (update.contexto) {
+    const allowed = new Set(['atis', 'regras_voo', 'destino', 'ultima_intencao', 'ultima_autorizacao', 'ultima_instrucao_controlador', 'cotejamento_pendente', 'emergencia_ativa']);
+    for (const key of Object.keys(update.contexto)) {
+      if (!allowed.has(key)) throw new TypeError(`campo de contexto não atualizável: ${key}.`);
+    }
+    next.contexto ??= {};
+    Object.assign(next.contexto, update.contexto);
+  }
   if (update.aeronave) {
     const allowed = new Set(['posicao', 'altitude', 'proa', 'velocidade']);
     for (const key of Object.keys(update.aeronave)) {

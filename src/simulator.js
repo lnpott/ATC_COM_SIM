@@ -2,6 +2,7 @@ import { buildGroundedRequest, validateGroundedReply } from './grounding.js';
 import { normalizePhraseology } from './normalization.js';
 import { getScenario } from './scenarios.js';
 import { applyStateUpdate, createSimulationState, recordTransmission } from './state-machine.js';
+import { processTransmission } from './pipeline.js';
 
 /** Coordinates deterministic layers but intentionally leaves STT, LLM and TTS as adapters. */
 export class SimulatorSession {
@@ -28,5 +29,14 @@ export class SimulatorSession {
     }
     this.state = recordTransmission(this.state, { origem: 'atco', texto: validated.texto_falado, fontes: validated.ids_fontes });
     return validated.texto_falado;
+  }
+
+  /** Runs the deterministic production pipeline and applies only its validated update. */
+  process(rawText, { debug = false } = {}) {
+    this.state = recordTransmission(this.state, { origem: 'piloto', texto: normalizePhraseology(rawText) });
+    const result = processTransmission({ text: rawText, idioma: this.idioma, state: this.state, search: this.search, debug });
+    if (result.decision.stateUpdate) this.state = applyStateUpdate(this.state, result.decision.stateUpdate);
+    this.state = recordTransmission(this.state, { origem: 'atco', texto: result.decision.spokenText, fontes: result.decision.sourceIds });
+    return result;
   }
 }
