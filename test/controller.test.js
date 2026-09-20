@@ -8,11 +8,11 @@ const state = { fase: 'solo', aeronave: { indicativo: 'PT-ABC' }, cenario: { pis
 test('controlador só autoriza com artigo específico recuperado', () => {
   const wrongEvidence = [{ id: 'outro', documento: 'MCA', artigo: 'Art. 1', texto: 'genérico', score: 10 }];
   assert.equal(createGroundedControllerReply({ text: 'solicito táxi', idioma: 'pt', state, searchResults: wrongEvidence }).covered, false);
-  const evidence = [{ id: 'MCA-100-16-art0125', documento: 'MCA-100-16', artigo: 'Art. 125', texto: 'Instruções de táxi', score: 4 }];
+  const evidence = [{ id: 'MCA-100-16-artigo-0125-001', documento: 'MCA-100-16', artigo: 'Art. 125', texto: 'Instruções de táxi', score: 4 }];
   const reply = createGroundedControllerReply({ text: 'solicito táxi', idioma: 'pt', state, searchResults: evidence });
   assert.equal(reply.covered, true);
   assert.match(reply.spokenText, /pista 18, QNH 1015/);
-  assert.deepEqual(reply.sourceIds, ['MCA-100-16-art0125']);
+  assert.deepEqual(reply.sourceIds, ['MCA-100-16-artigo-0125-001']);
 });
 
 test('intenção escolhe a fase documental sem alterar antecipadamente o estado', () => {
@@ -25,11 +25,11 @@ test('intenção escolhe a fase documental sem alterar antecipadamente o estado'
 test('fluxo funcional recupera as fontes específicas de cada autorização', async () => {
   const search = await ManualSearch.load();
   const cases = [
-    ['solicito instruções de táxi', 'solo', 'MCA-100-16-art0125'],
-    ['pronto para partida', 'decolagem', 'MCA-100-16-art0126'],
-    ['autorizado aproximação ILS', 'aproximacao', 'MCA-100-16-art0114'],
-    ['final, solicito pouso', 'pouso', 'MCA-100-16-art0132'],
-    ['mayday falha de motor', 'emergencia', 'MCA-100-16-art0064'],
+    ['solicito instruções de táxi', 'solo', 'MCA-100-16-artigo-0125-001'],
+    ['pronto para partida', 'decolagem', 'MCA-100-16-artigo-0126-001'],
+    ['autorizado aproximação ILS', 'aproximacao', 'MCA-100-16-artigo-0114-001'],
+    ['final, solicito pouso', 'pouso', 'MCA-100-16-artigo-0132-001'],
+    ['mayday falha de motor', 'emergencia', 'MCA-100-16-artigo-0064-001'],
   ];
   for (const [text, fase_de_voo, expectedId] of cases) {
     const searchResults = search.search({ texto: text, idioma: 'pt', fase_de_voo, limite: 8 });
