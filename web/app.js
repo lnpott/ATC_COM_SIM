@@ -101,7 +101,7 @@ async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null, 
   const { decision: reply, diagnostics } = processTransmission({
     text: rawText, idioma, state, search, debug: diagnosticMode,
     interpretation: semantic.pipelineInterpretation,
-    semanticMeta: semantic.pipelineInterpretation ? { ...semantic, sessionContextUsed: sessionContext } : { provider: 'gemini', model: null, error: semantic.error, sessionContextUsed: sessionContext },
+    semanticMeta: semantic.pipelineInterpretation ? { ...semantic, sessionContextUsed: sessionContext } : { provider: 'deterministic', requestedModel: null, actualModel: null, freeValidated: true, error: semantic.error, sessionContextUsed: sessionContext },
     sessionId, pttSessionId, sttCompletionMs, audioMeta, sttMeta, totalStartedAt,
   });
   if (pttSessionId) setPttState('responding');
