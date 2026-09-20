@@ -113,7 +113,10 @@ async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null, 
   state = recordTransmission(state, { origem: 'atco', texto: reply.spokenText, fontes: reply.sourceIds });
   lastClearance = reply.spokenText;
   addMessage('atco', reply.spokenText); renderEvidence(reply.source); renderState(); renderScore();
-  if (voiceEnabled) try { speakTransmission(reply.spokenText, { idioma }); } catch { /* UI remains usable without TTS. */ }
+  if (voiceEnabled) try {
+    const ttsStartedAt = performance.now(); const utterance = speakTransmission(reply.spokenText, { idioma });
+    if (diagnostics) { diagnostics.ttsVoice = utterance.voice?.name ?? null; diagnostics.ttsStartTimeMs = Math.round((performance.now() - ttsStartedAt) * 100) / 100; }
+  } catch { /* UI remains usable without TTS. */ }
   } finally {
     transmissionInFlight = false;
   }
@@ -161,7 +164,7 @@ function stopPtt() {
       if (audioResult.status !== 'fulfilled') throw audioResult.reason;
       const audioMeta = audioResult.value;
       const web = speechResult.status === 'fulfilled' ? speechResult.value : {};
-      const sttMeta = await transcribeAudioFree({ blob: audioMeta.blob, language: idioma, webSpeechTranscript: web.transcript, timings: { webSpeechLatencyMs: web.latencyMs } });
+      const sttMeta = await transcribeAudioFree({ blob: audioMeta.blob, language: idioma, durationMs: audioMeta.durationMs, webSpeechTranscript: web.transcript, timings: { webSpeechLatencyMs: web.latencyMs } });
       if (pttOperation?.id !== operation.id) return;
       $('#transmission').value = sttMeta.transcript;
       setPttState('interpreting');

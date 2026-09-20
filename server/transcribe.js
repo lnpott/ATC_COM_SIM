@@ -36,6 +36,8 @@ export function createTranscribeHandler(env = process.env, { fetchImpl = fetch }
     try {
       const { audio, fields } = parseMultipart(await readBody(request), contentType)
       if (!audio?.bytes?.length || audio.bytes.length > MAX_AUDIO_BYTES || !ALLOWED_MIME.has(audio.mime)) { response.statusCode = 400; response.end(JSON.stringify({ error: 'invalid_audio' })); return }
+      const durationMs = fields.durationMs == null ? null : Number(fields.durationMs)
+      if (durationMs != null && (!Number.isFinite(durationMs) || durationMs <= 0 || durationMs > 120_000)) { response.statusCode = 400; response.end(JSON.stringify({ error: 'invalid_audio_duration' })); return }
       const model = env.STT_GROQ_MODEL || 'whisper-large-v3-turbo'
       assertZeroCostRequest({ provider: 'groq', model, env })
       if (!env.GROQ_API_KEY) throw Object.assign(new Error('stt_unavailable'), { code: 'stt_unavailable' })
@@ -45,7 +47,7 @@ export function createTranscribeHandler(env = process.env, { fetchImpl = fetch }
       const upstream = await fetchImpl('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` }, body: form, signal: AbortSignal.timeout(12_000) })
       if (!upstream.ok) throw Object.assign(new Error('stt_error'), { code: upstream.status === 429 ? 'stt_free_quota' : 'stt_error' })
       const data = await upstream.json(); if (!data.text) throw Object.assign(new Error('stt_error'), { code: 'stt_error' })
-      response.end(JSON.stringify({ transcript: data.text, provider: 'groq', model, mode: 'groq_free', freeValidated: true, latencyMs: Math.round(performance.now() - startedAt), zeroCostMode: true, costChargedExpected: 0 }))
+      response.end(JSON.stringify({ transcript: data.text, provider: 'groq', model, mode: 'groq_free', freeValidated: true, latencyMs: Math.round(performance.now() - startedAt), audioSeconds: durationMs == null ? null : durationMs / 1000, zeroCostMode: true, costChargedExpected: 0 }))
     } catch (error) {
       const code = error?.code || error?.message || 'stt_error'
       response.statusCode = error?.status ?? ({ unverified_free_tier: 503, stt_unavailable: 503, stt_free_quota: 429, stt_timeout: 504 }[code] ?? 502)
