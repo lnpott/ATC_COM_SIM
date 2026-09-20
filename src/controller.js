@@ -1,4 +1,5 @@
 import { interpretTransmission } from './transmission.js';
+import { evaluateReadbackSemantic } from './training.js';
 
 const INTENTS = [
   { name: 'emergencia', terms: ['mayday', 'pan pan', 'emergência', 'emergency', 'falha de motor'], source: 'MCA-100-16-artigo-0064-001' },
@@ -55,6 +56,14 @@ export function decideGroundedReply({ text, idioma, state, searchResults, interp
   if (!source) {
     return outcome('unsupported', idioma === 'en' ? 'No documentary coverage for that request.' : 'Não há cobertura documental para essa solicitação.', 'relevant-evidence-not-retrieved');
   }
+  if (understood.intent === 'readback') {
+    const assessment = evaluateReadbackSemantic({ autorizacao: state.contexto.ultima_autorizacao, cotejamento: text })
+    if (!assessment.correct) {
+      const details = [...assessment.missing, ...assessment.contradictory].join(', ')
+      const spokenText = idioma === 'en' ? `Readback ${assessment.classification}; confirm ${details || 'the clearance'}.` : `Cotejamento ${assessment.classification === 'contradictory' ? 'divergente' : 'incompleto'}; confirme ${details || 'a autorização'}.`
+      return { covered: true, status: 'needs_clarification', reason: `readback:${assessment.classification}`, spokenText, sourceIds: [source.id], stateUpdate: null, source, interpretation: understood, readbackAssessment: assessment }
+    }
+  }
   const callSign = state.aeronave.indicativo;
   const runway = state.cenario.pista_em_uso;
   const qnh = state.cenario.qnh;
@@ -91,7 +100,7 @@ export function decideGroundedReply({ text, idioma, state, searchResults, interp
     readback: contextUpdate(understood),
   };
   const stateUpdate = updates[understood.intent];
-  stateUpdate.contexto = { ...(stateUpdate.contexto ?? {}), ultima_autorizacao: replies[understood.intent], ultima_intencao: understood.intent };
+  stateUpdate.contexto = { ...(stateUpdate.contexto ?? {}), ultima_autorizacao: replies[understood.intent], ultima_instrucao_controlador: replies[understood.intent], ultima_intencao: understood.intent, cotejamento_pendente: understood.intent !== 'readback', emergencia_ativa: understood.intent === 'emergency' || state.contexto?.emergencia_ativa === true };
   return { covered: true, status: 'documented', reason: 'grounded', spokenText: replies[understood.intent], sourceIds: [source.id], stateUpdate, source, interpretation: understood };
 }
 

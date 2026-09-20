@@ -16,7 +16,7 @@ function joinSegments(segments) {
 }
 
 /** One recognition session corresponds to one PTT press and emits one consolidated final transmission. */
-export function createRecognitionSession({ idioma = 'pt', onInterim, onFinal, onError, onEnd, scope = globalThis } = {}) {
+export function createRecognitionSession({ idioma = 'pt', onInterim, onFinal, onError, onEnd, scope = globalThis, sessionId } = {}) {
   const Recognition = scope.SpeechRecognition ?? scope.webkitSpeechRecognition
   if (!Recognition) throw new Error('SpeechRecognition não está disponível neste navegador.')
   if (typeof onFinal !== 'function') throw new TypeError('onFinal deve ser uma função.')
@@ -29,7 +29,7 @@ export function createRecognitionSession({ idioma = 'pt', onInterim, onFinal, on
   let settled = false
   let cancelled = false
   const startedAt = scope.performance?.now?.() ?? Date.now()
-  const id = scope.crypto?.randomUUID?.() ?? `ptt-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const id = sessionId ?? scope.crypto?.randomUUID?.() ?? `ptt-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
   recognition.onresult = (event) => {
     const start = Number.isInteger(event.resultIndex) ? event.resultIndex : 0

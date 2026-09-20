@@ -3,8 +3,10 @@ import { processTransmission } from '../src/pipeline.js';
 import { getScenario } from '../src/scenarios.js';
 import { ManualSearch } from '../src/search.js';
 import { createRecognitionSession, speakTransmission } from '../src/speech.js';
+import { createAudioCaptureSession } from '../src/audio-capture.js';
 import { limitedSessionContext } from '../src/llm/semantic-interpreter.js';
 import { requestSemanticInterpretation } from '../src/services/interpretTransmission.js';
+import { transcribeAudioFree } from '../src/services/transcribeAudio.js';
 import { applyStateUpdate, createSimulationState, recordTransmission } from '../src/state-machine.js';
 import { buildSessionReport, evaluateReadback } from '../src/training.js';
 
@@ -16,11 +18,15 @@ let lastClearance = null;
 let evaluations = [];
 let voiceEnabled = true;
 let recognitionSession = null;
+let pttOperation = null;
 let transmissionInFlight = false;
 let sessionId = crypto.randomUUID();
 const processedPttSessions = new Set();
 const diagnosticMode = new URLSearchParams(location.search).has('debug');
 if (diagnosticMode) window.__ATC_DEBUG__ = [];
+
+const pttLabels = { recording: 'TRANSMITINDO…', transcribing: 'TRANSCREVENDO…', interpreting: 'INTERPRETANDO…', searching: 'BUSCANDO DOCUMENTAÇÃO…', responding: 'RESPONDENDO…' };
+function setPttState(name = '') { const button = $('#ptt'); button.dataset.state = name; button.querySelector('small').textContent = pttLabels[name] ?? 'PRESSIONE PARA FALAR'; }
 
 function startScenario() {
   recognitionSession?.abort();
@@ -69,7 +75,7 @@ function renderScore() {
   $('#score-detail').textContent = evaluations.length ? `${evaluations.length} cotejamento(s) · ${Object.keys(report.erros_recorrentes).length} tipo(s) de omissão` : 'Nenhum cotejamento avaliado.';
 }
 
-async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null } = {}) {
+async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null, audioMeta = null, sttMeta = null, totalStartedAt = null } = {}) {
   if (!search || !rawText.trim() || transmissionInFlight) return;
   if (pttSessionId && processedPttSessions.has(pttSessionId)) return;
   if (pttSessionId) processedPttSessions.add(pttSessionId);
@@ -81,6 +87,7 @@ async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null }
   state = recordTransmission(state, { origem: 'piloto', texto: text });
   addMessage('pilot', text);
   let semantic;
+  if (pttSessionId) setPttState('interpreting');
   try {
     semantic = await requestSemanticInterpretation({
       rawTranscript: rawText, normalizedTranscript: text,
@@ -90,12 +97,14 @@ async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null }
   } catch (error) {
     semantic = { error: error.code ?? 'llm_unavailable' };
   }
+  if (pttSessionId) setPttState('searching');
   const { decision: reply, diagnostics } = processTransmission({
     text: rawText, idioma, state, search, debug: diagnosticMode,
     interpretation: semantic.pipelineInterpretation,
     semanticMeta: semantic.pipelineInterpretation ? { ...semantic, sessionContextUsed: sessionContext } : { provider: 'gemini', model: null, error: semantic.error, sessionContextUsed: sessionContext },
-    sessionId, pttSessionId, sttCompletionMs,
+    sessionId, pttSessionId, sttCompletionMs, audioMeta, sttMeta, totalStartedAt,
   });
+  if (pttSessionId) setPttState('responding');
   if (diagnostics) window.__ATC_DEBUG__.push(diagnostics);
   if (!reply.covered) {
     addMessage('atco', reply.spokenText, reply.status === 'unsupported'); renderEvidence(null); renderScore(); return;
@@ -111,28 +120,55 @@ async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null }
 }
 
 function startPtt() {
-  if (recognitionSession || transmissionInFlight) return;
+  if (pttOperation || recognitionSession || transmissionInFlight) return;
   const button = $('#ptt');
   try {
+    const pttSessionId = crypto.randomUUID();
+    let webSpeechTranscript = '';
+    let webSpeechResolve;
+    const webSpeechDone = new Promise((resolve) => { webSpeechResolve = resolve; });
+    const capture = createAudioCaptureSession({ onState: (stateName) => { if (stateName === 'recording') setPttState('recording'); } });
+    capture.done.catch(() => {});
     const session = createRecognitionSession({
-      idioma,
+      idioma, sessionId: pttSessionId,
       onInterim: (text, meta) => { if (recognitionSession?.id === meta.sessionId) $('#transmission').value = text; },
-      onFinal: (text, meta) => { if (recognitionSession?.id === meta.sessionId) { $('#transmission').value = text; transmit(text, { pttSessionId: meta.sessionId, sttCompletionMs: meta.sttCompletionMs }); } },
-      onError: () => addMessage('atco', 'Não foi possível concluir o reconhecimento de voz.', true),
-      onEnd: (meta) => { if (recognitionSession?.id === meta.sessionId) recognitionSession = null; button.classList.remove('listening'); },
+      onFinal: (text, meta) => { if (recognitionSession?.id === meta.sessionId) { webSpeechTranscript = text; $('#transmission').value = text; } },
+      onError: (event) => { if (event?.error !== 'aborted') webSpeechResolve({ transcript: '', error: 'stt_error' }); },
+      onEnd: (meta) => { webSpeechResolve({ transcript: webSpeechTranscript, latencyMs: meta.sttCompletionMs }); if (recognitionSession?.id === meta.sessionId) recognitionSession = null; },
     });
     recognitionSession = session;
+    pttOperation = { id: pttSessionId, capture, webSpeechDone, startedAt: performance.now(), stopping: false };
     button.classList.add('listening');
+    setPttState('recording');
+    capture.start();
     recognitionSession.start();
   } catch (error) {
-    recognitionSession = null;
+    recognitionSession = null; pttOperation = null;
     button.classList.remove('listening');
     addMessage('atco', error.message, true);
   }
 }
 
 function stopPtt() {
-  recognitionSession?.stop();
+  const operation = pttOperation;
+  if (!operation || operation.stopping) return;
+  operation.stopping = true;
+  const button = $('#ptt'); setPttState('transcribing');
+  recognitionSession?.stop(); operation.capture.stop();
+  Promise.allSettled([operation.capture.done, operation.webSpeechDone]).then(async ([audioResult, speechResult]) => {
+    if (pttOperation?.id !== operation.id) return;
+    try {
+      if (audioResult.status !== 'fulfilled') throw audioResult.reason;
+      const audioMeta = audioResult.value;
+      const web = speechResult.status === 'fulfilled' ? speechResult.value : {};
+      const sttMeta = await transcribeAudioFree({ blob: audioMeta.blob, language: idioma, webSpeechTranscript: web.transcript, timings: { webSpeechLatencyMs: web.latencyMs } });
+      if (pttOperation?.id !== operation.id) return;
+      $('#transmission').value = sttMeta.transcript;
+      setPttState('interpreting');
+      await transmit(sttMeta.transcript, { pttSessionId: operation.id, sttCompletionMs: sttMeta.latencyMs, audioMeta, sttMeta, totalStartedAt: operation.startedAt });
+    } catch (error) { addMessage('atco', error.code === 'microphone_error' ? 'Permissão de microfone negada.' : 'Nenhum STT gratuito conseguiu transcrever a gravação.', true); }
+    finally { if (pttOperation?.id === operation.id) pttOperation = null; button.classList.remove('listening'); setPttState(); }
+  });
 }
 
 $('#transmission-form').addEventListener('submit', (event) => { event.preventDefault(); const input = $('#transmission'); transmit(input.value); input.value = ''; });

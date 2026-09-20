@@ -4,7 +4,7 @@ import { buildGroundedRequest, GOLDEN_RULE, validateGroundedReply } from '../src
 import { normalizePhraseology, expandForSpeech } from '../src/normalization.js';
 import { getScenario } from '../src/scenarios.js';
 import { applyStateUpdate, createSimulationState, recordTransmission } from '../src/state-machine.js';
-import { buildSessionReport, evaluateReadback, explainResult } from '../src/training.js';
+import { buildSessionReport, evaluateReadback, evaluateReadbackSemantic, explainResult } from '../src/training.js';
 import { TransmissionQueue } from '../src/radio.js';
 import { SimulatorSession } from '../src/simulator.js';
 import { createBrowserRecognizer, speakTransmission } from '../src/speech.js';
@@ -40,6 +40,13 @@ test('avalia cotejamento, explica fonte e consolida relatório', () => {
   assert.deepEqual(buildSessionReport([{}], [evaluation]), { transmissoes: 1, avaliacoes: 1, score: 67, erros_recorrentes: { proa: 1 } });
   assert.deepEqual(evaluateReadback({ autorizacao: 'runway 18, heading 090', cotejamento: 'runway 18' }).omitidos, ['proa']);
 });
+
+test('readback contextual distingue correto, incompleto e contraditório', () => {
+  const clearance = 'PT-ABC, pista 18, QNH 1015, proa 090.'
+  assert.equal(evaluateReadbackSemantic({ autorizacao: clearance, cotejamento: 'pista 18 QNH 1015 proa 090' }).classification, 'correct')
+  assert.deepEqual(evaluateReadbackSemantic({ autorizacao: clearance, cotejamento: 'pista 18 QNH 1015' }).missing, ['proa'])
+  assert.deepEqual(evaluateReadbackSemantic({ autorizacao: clearance, cotejamento: 'pista 20 QNH 1015 proa 090' }).contradictory, ['pista'])
+})
 
 test('fila de transmissões serializa tráfego simultâneo', async () => {
   const queue = new TransmissionQueue();
