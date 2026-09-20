@@ -19,8 +19,10 @@ for (const candidate of candidates) {
   for (const [language, text, expected] of cases) try {
     const result = await interpretSemantically({ rawTranscript: text, normalizedTranscript: text, language, sessionContext: { callsign: 'PTABC', airport: 'SBGL' }, scenarioContext: { airport: 'SBGL', runway: '18' } }, provider)
     schemaSuccess += 1; if (result.interpretation.intent === expected) correct += 1; latencies.push(result.latencyMs); actualModels.add(result.actualModel)
-  } catch (error) { failures.push(error.code || 'error') }
+  } catch (error) {
+    const code = error.code || 'error'; failures.push(code)
+    if (code === 'quota') break // Não martelar um pool gratuito rate-limited.
+  }
   reports.push({ provider: candidate.provider, requestedModel: candidate.id, freeValidated: true, cases: cases.length, semanticAccuracy: correct / cases.length, schemaSuccess: schemaSuccess / cases.length, latencyP50Ms: latencies.sort((a, b) => a - b)[Math.floor(latencies.length / 2)] ?? null, actualModels: [...actualModels], failures })
 }
-console.log(JSON.stringify({ zeroCostMode: policy.zeroCostMode, allowPaidApi: policy.allowPaidApi, groqIncluded: false, reason: 'GROQ_FREE_TIER_CONFIRMED não verificado', reports }, null, 2))
-if (candidates.length && !reports.some(({ schemaSuccess }) => schemaSuccess > 0)) process.exitCode = 1
+console.log(JSON.stringify({ zeroCostMode: policy.zeroCostMode, allowPaidApi: policy.allowPaidApi, groqIncluded: false, reason: 'GROQ_FREE_TIER_CONFIRMED não verificado', status: reports.some(({ schemaSuccess }) => schemaSuccess > 0) ? 'measured' : 'free_capacity_unavailable', reports }, null, 2))

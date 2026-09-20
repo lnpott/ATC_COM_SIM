@@ -25,7 +25,11 @@ export function createAutoFreeProvider({ env = process.env, fetchImpl = fetch, t
           failures.push({ provider: candidate.provider, model: candidate.id, code: error?.code || 'provider_error' })
         }
       }
-      throw new LlmProviderError('free_providers_exhausted', 'Todos os provedores LLM gratuitos estão indisponíveis.', failures)
+      const codes = failures.map(({ code }) => code)
+      const code = codes.length && codes.every((item) => ['quota', 'timeout'].includes(item))
+        ? (codes.includes('quota') ? 'llm_free_quota' : 'llm_timeout')
+        : 'llm_provider_error'
+      throw new LlmProviderError(code, 'Todos os provedores LLM gratuitos estão indisponíveis.', failures)
     },
   }
 }

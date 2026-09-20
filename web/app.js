@@ -166,7 +166,10 @@ function stopPtt() {
       $('#transmission').value = sttMeta.transcript;
       setPttState('interpreting');
       await transmit(sttMeta.transcript, { pttSessionId: operation.id, sttCompletionMs: sttMeta.latencyMs, audioMeta, sttMeta, totalStartedAt: operation.startedAt });
-    } catch (error) { addMessage('atco', error.code === 'microphone_error' ? 'Permissão de microfone negada.' : 'Nenhum STT gratuito conseguiu transcrever a gravação.', true); }
+    } catch (error) {
+      if (diagnosticMode) window.__ATC_DEBUG__.push({ sessionId, pttSessionId: operation.id, stage: 'stt', errorCode: error.code ?? 'stt_error', failures: error.failures ?? [] });
+      addMessage('atco', error.code === 'microphone_error' ? 'Permissão de microfone negada.' : 'Nenhum STT gratuito conseguiu transcrever a gravação.', true);
+    }
     finally { if (pttOperation?.id === operation.id) pttOperation = null; button.classList.remove('listening'); setPttState(); }
   });
 }

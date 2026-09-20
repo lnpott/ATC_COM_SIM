@@ -29,7 +29,7 @@ export function createInterpretTransmissionHandler(env = process.env, options = 
       response.statusCode = 200
       response.end(JSON.stringify({ ...result, interpretationMode: 'llm', zeroCostMode: policy.zeroCostMode, allowPaidApi: policy.allowPaidApi }))
     } catch (error) {
-      response.statusCode = error?.status === 413 ? 413 : error instanceof SyntaxError ? 400 : ({ configuration: 503, quota: 429, timeout: 504, upstream: 503, request: 400, invalid_json: 502, empty: 502, free_providers_exhausted: 503, paid_provider_blocked: 403, paid_model_blocked: 403, unverified_free_tier: 403 }[error?.code] ?? 502)
+      response.statusCode = error?.status === 413 ? 413 : error instanceof SyntaxError ? 400 : ({ configuration: 503, quota: 429, timeout: 504, upstream: 503, request: 400, invalid_json: 502, empty: 502, llm_free_quota: 429, llm_timeout: 504, llm_provider_error: 503, paid_provider_blocked: 403, paid_model_blocked: 403, unverified_free_tier: 403 }[error?.code] ?? 502)
       response.end(JSON.stringify({ error: error?.code || (error instanceof SyntaxError ? 'invalid_json' : 'llm_unavailable') }))
     }
   }
