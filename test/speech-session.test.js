@@ -66,6 +66,27 @@ test('erro e abort encerram sem transmitir conteúdo parcial', () => {
   }
 })
 
+test('sessões PTT têm IDs únicos e ignoram stop/onend/resultados tardios duplicados', () => {
+  const first = recognitionScope()
+  const firstFinals = []
+  const firstSession = createRecognitionSession({ scope: first.scope, onFinal: (text, meta) => firstFinals.push([text, meta.sessionId]) })
+  firstSession.start()
+  first.Recognition.instance.onresult({ resultIndex: 0, results: [result('primeira transmissão', true)] })
+  firstSession.stop(); firstSession.stop()
+  first.Recognition.instance.onend(); first.Recognition.instance.onend()
+
+  const second = recognitionScope()
+  const secondFinals = []
+  const secondSession = createRecognitionSession({ scope: second.scope, onFinal: (text, meta) => secondFinals.push([text, meta.sessionId]) })
+  secondSession.start()
+  second.Recognition.instance.onresult({ resultIndex: 0, results: [result('segunda transmissão', true)] })
+  second.Recognition.instance.onend()
+
+  assert.notEqual(firstSession.id, secondSession.id)
+  assert.deepEqual(firstFinals, [['primeira transmissão', firstSession.id]])
+  assert.deepEqual(secondFinals, [['segunda transmissão', secondSession.id]])
+})
+
 test('seleciona voz por locale e qualidade, com fallback determinístico', () => {
   const voices = [
     { name: 'Zeta Basic', lang: 'pt-BR', localService: true },

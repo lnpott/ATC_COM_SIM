@@ -98,3 +98,18 @@ mantém texto visual separado da versão de pronúncia. Indicativos e frequênci
 são expandidos apenas para a fala. Os testes automatizados usam implementações
 controladas da Web Speech API; microfone e vozes instaladas continuam dependendo
 de validação humana no navegador/sistema operacional de destino.
+
+## Evolução LLM-first
+
+Após nova validação humana, o parser lexical foi reposicionado como fallback. O
+caminho normal chama `POST /api/interpret-transmission`; Gemini retorna apenas uma
+interpretação validada pelo schema. Estado confirmado e no máximo duas mensagens
+recentes entram como contexto. A interpretação gera busca, mas não autoriza,
+seleciona evidência nem altera estado. A ADR completa está em
+`docs/ADR-001-LLM-FIRST.md`.
+
+Falhas do provider são diagnosticadas separadamente e ativam
+`deterministic_fallback`. O retrieval deixou também de inserir automaticamente o
+artigo mapeado: o prior de intenção agora só aumenta o score quando BM25/aliases
+realmente recuperam esse ID. Grounding continua exigindo evidência presente na
+recuperação atual.

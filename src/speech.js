@@ -28,6 +28,8 @@ export function createRecognitionSession({ idioma = 'pt', onInterim, onFinal, on
   const segments = new Map()
   let settled = false
   let cancelled = false
+  const startedAt = scope.performance?.now?.() ?? Date.now()
+  const id = scope.crypto?.randomUUID?.() ?? `ptt-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
   recognition.onresult = (event) => {
     const start = Number.isInteger(event.resultIndex) ? event.resultIndex : 0
@@ -37,6 +39,7 @@ export function createRecognitionSession({ idioma = 'pt', onInterim, onFinal, on
       if (text) segments.set(index, { text, final: Boolean(result.isFinal) })
     }
     onInterim?.(joinSegments(segments), {
+      sessionId: id,
       final: joinSegments(new Map([...segments].filter(([, segment]) => segment.final))),
       pending: joinSegments(new Map([...segments].filter(([, segment]) => !segment.final))),
     })
@@ -52,13 +55,13 @@ export function createRecognitionSession({ idioma = 'pt', onInterim, onFinal, on
     settled = true
     if (!cancelled) {
       const text = joinSegments(segments)
-      if (text) onFinal(text)
+      if (text) onFinal(text, { sessionId: id, sttCompletionMs: Math.round((scope.performance?.now?.() ?? Date.now()) - startedAt) })
     }
-    onEnd?.({ cancelled, transcript: joinSegments(segments) })
+    onEnd?.({ sessionId: id, cancelled, transcript: joinSegments(segments), sttCompletionMs: Math.round((scope.performance?.now?.() ?? Date.now()) - startedAt) })
   }
 
   return {
-    recognition,
+    id, recognition,
     get transcript() { return joinSegments(segments) },
     start() { recognition.start() },
     stop() { if (!settled) recognition.stop() },

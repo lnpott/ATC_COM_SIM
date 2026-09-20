@@ -129,7 +129,8 @@ test('estado conserva contexto validado e não o compartilha entre sessões', ()
 
 test('diagnóstico estruturado identifica cada estágio sem incluir segredos', () => {
   const result = processTransmission({ text: 'PT-ABC pronto para táxi', idioma: 'pt', state: stateFor(), search, debug: true })
-  assert.deepEqual(Object.keys(result.diagnostics), ['receivedText', 'normalizedText', 'intent', 'confidence', 'entities', 'normalizedQuery', 'retrieved', 'reranked', 'expandedContext', 'evidenceUsed', 'decision', 'reason', 'stateUpdate'])
+  for (const field of ['rawTranscript', 'finalTranscript', 'interpretationMode', 'intent', 'confidence', 'queriesGenerated', 'bm25Results', 'reranked', 'expandedContext', 'evidenceUsed', 'decision', 'reason', 'stateUpdate', 'responseMode']) assert.ok(field in result.diagnostics, field)
+  assert.equal(result.diagnostics.interpretationMode, 'deterministic_fallback')
   assert.equal(result.diagnostics.intent, 'taxi_request')
   assert.ok(result.diagnostics.reranked[0].retrievalReasons.includes('intent-metadata'))
   assert.deepEqual(result.diagnostics.evidenceUsed, ['MCA-100-16-artigo-0125-001'])

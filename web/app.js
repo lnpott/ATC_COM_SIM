@@ -3,6 +3,8 @@ import { processTransmission } from '../src/pipeline.js';
 import { getScenario } from '../src/scenarios.js';
 import { ManualSearch } from '../src/search.js';
 import { createRecognitionSession, speakTransmission } from '../src/speech.js';
+import { limitedSessionContext } from '../src/llm/semantic-interpreter.js';
+import { requestSemanticInterpretation } from '../src/services/interpretTransmission.js';
 import { applyStateUpdate, createSimulationState, recordTransmission } from '../src/state-machine.js';
 import { buildSessionReport, evaluateReadback } from '../src/training.js';
 
@@ -15,6 +17,8 @@ let evaluations = [];
 let voiceEnabled = true;
 let recognitionSession = null;
 let transmissionInFlight = false;
+let sessionId = crypto.randomUUID();
+const processedPttSessions = new Set();
 const diagnosticMode = new URLSearchParams(location.search).has('debug');
 if (diagnosticMode) window.__ATC_DEBUG__ = [];
 
@@ -24,6 +28,8 @@ function startScenario() {
   const config = getScenario($('#scenario').value);
   idioma = config.idioma;
   state = createSimulationState(config);
+  sessionId = crypto.randomUUID();
+  processedPttSessions.clear();
   lastClearance = null; evaluations = [];
   $('#transcript').innerHTML = '<div class="empty"><span>⌁</span><strong>Frequência livre</strong><p>Use uma sugestão ou pressione o PTT para iniciar.</p></div>';
   $('#evidence').className = 'evidence-empty';
@@ -63,15 +69,33 @@ function renderScore() {
   $('#score-detail').textContent = evaluations.length ? `${evaluations.length} cotejamento(s) · ${Object.keys(report.erros_recorrentes).length} tipo(s) de omissão` : 'Nenhum cotejamento avaliado.';
 }
 
-async function transmit(rawText) {
+async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null } = {}) {
   if (!search || !rawText.trim() || transmissionInFlight) return;
+  if (pttSessionId && processedPttSessions.has(pttSessionId)) return;
+  if (pttSessionId) processedPttSessions.add(pttSessionId);
   transmissionInFlight = true;
   try {
   const text = normalizePhraseology(rawText);
+  const sessionContext = limitedSessionContext(state);
   if (lastClearance) evaluations.push(evaluateReadback({ autorizacao: lastClearance, cotejamento: text }));
   state = recordTransmission(state, { origem: 'piloto', texto: text });
   addMessage('pilot', text);
-  const { decision: reply, diagnostics } = processTransmission({ text: rawText, idioma, state, search, debug: diagnosticMode });
+  let semantic;
+  try {
+    semantic = await requestSemanticInterpretation({
+      rawTranscript: rawText, normalizedTranscript: text,
+      language: idioma, sessionContext,
+      scenarioContext: { airport: state.cenario.aerodromo, runway: state.cenario.pista_em_uso, qnh: state.cenario.qnh, phase: state.fase },
+    });
+  } catch (error) {
+    semantic = { error: error.code ?? 'llm_unavailable' };
+  }
+  const { decision: reply, diagnostics } = processTransmission({
+    text: rawText, idioma, state, search, debug: diagnosticMode,
+    interpretation: semantic.pipelineInterpretation,
+    semanticMeta: semantic.pipelineInterpretation ? { ...semantic, sessionContextUsed: sessionContext } : { provider: 'gemini', model: null, error: semantic.error, sessionContextUsed: sessionContext },
+    sessionId, pttSessionId, sttCompletionMs,
+  });
   if (diagnostics) window.__ATC_DEBUG__.push(diagnostics);
   if (!reply.covered) {
     addMessage('atco', reply.spokenText, reply.status === 'unsupported'); renderEvidence(null); renderScore(); return;
@@ -90,13 +114,14 @@ function startPtt() {
   if (recognitionSession || transmissionInFlight) return;
   const button = $('#ptt');
   try {
-    recognitionSession = createRecognitionSession({
+    const session = createRecognitionSession({
       idioma,
-      onInterim: (text) => { $('#transmission').value = text; },
-      onFinal: (text) => { $('#transmission').value = text; transmit(text); },
+      onInterim: (text, meta) => { if (recognitionSession?.id === meta.sessionId) $('#transmission').value = text; },
+      onFinal: (text, meta) => { if (recognitionSession?.id === meta.sessionId) { $('#transmission').value = text; transmit(text, { pttSessionId: meta.sessionId, sttCompletionMs: meta.sttCompletionMs }); } },
       onError: () => addMessage('atco', 'Não foi possível concluir o reconhecimento de voz.', true),
-      onEnd: () => { recognitionSession = null; button.classList.remove('listening'); },
+      onEnd: (meta) => { if (recognitionSession?.id === meta.sessionId) recognitionSession = null; button.classList.remove('listening'); },
     });
+    recognitionSession = session;
     button.classList.add('listening');
     recognitionSession.start();
   } catch (error) {

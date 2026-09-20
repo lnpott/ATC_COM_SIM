@@ -17,13 +17,14 @@ function publicResult(chunk, score, extra = {}) {
 
 export function formulateSearch(interpretation, state) {
   const profile = PROFILES[interpretation.intent]
-  if (!profile) return { original: interpretation.rawText, normalized: '', aliases: [], phase: interpretation.flightPhase ?? state.fase, targetSource: undefined }
+  if (!profile) return { original: interpretation.rawText, normalized: (interpretation.searchConcepts ?? []).join(' '), aliases: interpretation.searchConcepts ?? [], phase: interpretation.flightPhase ?? state.fase, targetSource: undefined }
   const language = interpretation.language === 'en' ? 'en' : 'pt'
   const entities = [interpretation.flightRules, interpretation.destination, interpretation.runway].filter(Boolean)
+  const semanticConcepts = (interpretation.searchConcepts ?? []).filter((concept) => typeof concept === 'string').slice(0, 10)
   return {
     original: interpretation.rawText,
-    normalized: [...profile[language], ...entities].join(' '),
-    aliases: profile[language],
+    normalized: [...semanticConcepts, ...profile[language], ...entities].join(' '),
+    aliases: [...semanticConcepts, ...profile[language]],
     phase: profile.phase ?? interpretation.flightPhase ?? state.fase,
     targetSource: profile.source,
   }
@@ -41,13 +42,10 @@ export function retrieveHybrid(search, plan, { idioma = 'pt', limite = 8 } = {})
     current.reasons.push(runIndex === 0 ? 'bm25-original' : 'intent-query')
     merged.set(result.id, current)
   }))
-  const target = plan.targetSource && search.index.chunks.find((chunk) => chunk.id === plan.targetSource)
-  if (target && target.idioma.split('-').includes(idioma)) {
-    const current = merged.get(target.id) ?? publicResult(target, 0, { hybridScore: 0, reasons: [] })
-    current.hybridScore += 1
-    current.reasons.push('intent-metadata')
-    merged.set(target.id, current)
-  }
+  // Metadata boosts only a document that was actually found by a retrieval run;
+  // it never injects an article solely because an intent suggested it.
+  const target = plan.targetSource && merged.get(plan.targetSource)
+  if (target) { target.hybridScore += 0.3; target.reasons.push('intent-metadata') }
   const ranked = [...merged.values()].sort((a, b) => b.hybridScore - a.hybridScore || b.score - a.score)
   const selected = ranked.slice(0, limite).map(({ hybridScore, reasons, ...result }) => ({ ...result, score: Number(hybridScore.toFixed(6)), retrievalReasons: [...new Set(reasons)] }))
   const expanded = expandContext(search.index.chunks, selected, idioma)

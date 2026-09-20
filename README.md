@@ -6,10 +6,7 @@ Simulador de comunicações com ATCO's
 O frontend, construído com Vite, preserva duas experiências complementares: o
 simulador documental em `/`, com entrada por texto/PTT, cenários, evidências e
 score; e a prova de conceito React de voz em `/voice.html`. O endpoint
-`/api/generate-reply` é uma função serverless Node.js na Vercel; as credenciais
-de provedores permanecem exclusivamente no servidor. Em desenvolvimento, o
-plugin de `vite.config.js` expõe o mesmo handler. O provedor padrão é o `mock`,
-que permite executar integralmente a demonstração sem credenciais externas.
+`/api/interpret-transmission` e `/api/generate-reply` são funções serverless Node.js na Vercel; as credenciais permanecem exclusivamente no servidor. Em desenvolvimento, o plugin de `vite.config.js` expõe os mesmos handlers. O interpretador principal usa Gemini no servidor; o parser local existe somente como fallback identificado.
 
 ## Instalação e execução
 
@@ -39,14 +36,11 @@ npm start         # serve dist/ após um build
 
 ## Variáveis de ambiente
 
-Nenhuma variável é obrigatória: sem configuração, `LLM_PROVIDER=mock` é usado.
-Para habilitar um provedor remoto, configure **somente no servidor** uma das
-combinações abaixo (nunca use o prefixo `VITE_`):
+Configure **somente no servidor** (nunca use o prefixo `VITE_`):
 
 | Provedor | Variáveis |
 | --- | --- |
-| Mock | `LLM_PROVIDER=mock` (opcional) |
-| Gemini | `LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| Gemini (padrão) | `LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.8-flash` |
 | Groq | `LLM_PROVIDER=groq`, `GROQ_API_KEY`, `GROQ_MODEL` |
 
 ## Implantação na Vercel
@@ -61,9 +55,7 @@ vercel deploy       # preview
 vercel deploy --prod
 ```
 
-As variáveis de um provedor remoto devem ser cadastradas separadamente nos
-ambientes Preview e Production. O modo `mock` é indicado para smoke tests e não
-exige segredo. O arquivo `.env.example` documenta apenas nomes e nunca deve
+As variáveis devem ser cadastradas separadamente nos ambientes Preview e Production. O arquivo `.env.example` documenta apenas nomes e nunca deve
 conter chaves reais.
 
 Implantação mantida por este repositório:
@@ -102,20 +94,49 @@ validate` para conferir estaticamente o índice e as consultas em
 `reference/search-queries.v1.json`. Os IDs têm o formato normalizado
 `DOCUMENTO-artigo-NNNN-SEGMENTO`.
 
-## Compreensão contextual e diagnóstico
+## Arquitetura de compreensão
 
-O simulador principal não consulta mais o BM25 somente com a frase completa. O
-pipeline separa normalização, interpretação de intenção/entidades, contexto da
-sessão, formulação de consultas, recuperação híbrida, expansão lógica,
-reranking, grounding, decisão e atualização validada de estado. A estratégia é
-local e determinística; não requer LLM ou embeddings para os casos atualmente
-suportados.
+Uma sessão PTT consolida o STT antes de qualquer chamada. O browser envia texto
+bruto, normalização superficial, cenário e contexto confirmado limitado para
+`POST /api/interpret-transmission`. O backend usa `@google/genai`, structured
+output JSON Schema e `gemini-3.8-flash` com thinking desabilitado, temperatura
+0,1, timeout de oito segundos e retry curto somente para 5xx.
 
-Use `/?debug=1` para habilitar o diagnóstico opt-in em
-`window.__ATC_DEBUG__`. Cada registro mostra a intenção, entidades, consultas,
-rankings, evidências, motivo da decisão e transição, sem incluir variáveis de
-ambiente. A análise da causa raiz, métricas antes/depois, auditoria do corpus e
-limitações estão em [`docs/PIPELINE_CONTEXTUAL.md`](docs/PIPELINE_CONTEXTUAL.md).
+O resultado validado gera queries a partir de intenção, família, fase,
+`searchConcepts` e entidades. BM25, aliases, prior de metadados somente sobre
+resultados efetivamente encontrados, reranking e chunks vizinhos preservam IDs
+reais. O controlador determinístico exige evidência antes de autorizar e a
+máquina de estados valida a proposta. A LLM nunca autoriza nem altera estado.
+
+```text
+PTT → STT final → Gemini/schema → contexto → queries → BM25/reranking/vizinhos
+→ grounding → decisão → estado validado → resposta → TTS/evidências/debug
+```
+
+### Fallback
+
+Timeout, quota, 4xx/5xx, resposta vazia, JSON ou schema inválido não são tratados
+como “sem cobertura documental”. O cliente executa o interpretador determinístico
+existente e registra `interpretationMode=deterministic_fallback`; grounding e
+estado continuam obrigatórios. O fallback tem capacidade inferior e não é
+apresentado como equivalente ao modo LLM.
+
+### Debug e latência
+
+Use `/?debug=1` para habilitar `window.__ATC_DEBUG__`. Cada registro inclui IDs de
+sessão/PTT, transcrições, modo/provider/modelo, latência LLM, estrutura semântica,
+contexto limitado, queries, BM25/reranking/vizinhos, evidências, decisão, resposta,
+estado e locale TTS. Chaves, tokens e segredos nunca são incluídos. Veja a
+[decisão arquitetural](docs/ADR-001-LLM-FIRST.md).
+
+### Testes e limitações de voz
+
+`npm run test:llm` executa a suíte opt-in real quando `GEMINI_API_KEY` existe;
+`npm test` usa provider controlado e não consome quota. O teste automatizado de
+Web Speech usa implementação controlada. Checklist humano: Chrome/Edge atual,
+HTTPS, microfone permitido; pressionar PTT, falar a frase longa, soltar e confirmar
+uma transcrição, uma interpretação e uma resposta. STT e TTS ainda dependem do
+browser, sistema operacional, microfone e vozes instaladas.
 
 ## Motor e módulos de treino
 
