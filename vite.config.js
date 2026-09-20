@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { createGenerateReplyHandler } from './server/generate-reply.js'
+import { resolve } from 'node:path'
 
 function replyApiPlugin(env) {
   return {
@@ -16,5 +17,13 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), replyApiPlugin(env)],
+    build: {
+      rollupOptions: {
+        input: {
+          simulator: resolve(import.meta.dirname, 'index.html'),
+          voice: resolve(import.meta.dirname, 'voice.html'),
+        },
+      },
+    },
   }
 })

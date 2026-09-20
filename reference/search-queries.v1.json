@@ -5,32 +5,32 @@
     {
       "nome": "solo-taxi",
       "entrada": { "texto": "solicito autorização para táxi", "idioma": "pt", "fase_de_voo": "solo" },
-      "ids_esperados": ["MCA-100-16-art0125", "ICA-100-12-art0079"]
+      "ids_esperados": ["MCA-100-16-artigo-0125-001", "ICA-100-12-artigo-0079-001"]
     },
     {
       "nome": "decolagem-partida",
       "entrada": { "texto": "pronto para decolagem", "idioma": "pt", "fase_de_voo": "decolagem" },
-      "ids_esperados": ["MCA-100-16-art0126"]
+      "ids_esperados": ["MCA-100-16-artigo-0126-001"]
     },
     {
       "nome": "rota-nivel-posicao",
       "entrada": { "texto": "subida para nível de voo e reporte posição", "idioma": "pt", "fase_de_voo": "rota" },
-      "ids_esperados": ["MCA-100-16-art0091", "MCA-100-16-art0106"]
+      "ids_esperados": ["MCA-100-16-artigo-0091-001", "MCA-100-16-artigo-0106-001"]
     },
     {
       "nome": "aproximacao-instrumentos",
       "entrada": { "texto": "autorizado aproximação ILS", "idioma": "pt", "fase_de_voo": "aproximacao" },
-      "ids_esperados": ["MCA-100-16-art0114"]
+      "ids_esperados": ["MCA-100-16-artigo-0114-001"]
     },
     {
       "nome": "pouso-reta-final",
       "entrada": { "texto": "final pista pouso autorizado", "idioma": "pt", "fase_de_voo": "pouso" },
-      "ids_esperados": ["MCA-100-16-art0132"]
+      "ids_esperados": ["MCA-100-16-artigo-0132-001"]
     },
     {
       "nome": "emergencia-motor",
       "entrada": { "texto": "mayday falha de motor pouso forçado", "idioma": "pt", "fase_de_voo": "emergencia" },
-      "ids_esperados": ["MCA-100-16-art0064"],
+      "ids_esperados": ["MCA-100-16-artigo-0064-001"],
       "artigos_esperados": ["Art. 64"]
     },
     {

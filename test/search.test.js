@@ -32,7 +32,7 @@ test('filtros preservam chunks bilíngues e a fase geral', () => {
   const english = search.search({
     texto: 'request taxi instructions', idioma: 'en', fase: 'solo', limite: 8,
   });
-  assert.ok(english.some(({ id }) => id === 'MCA-100-16-art0125'));
+  assert.ok(english.some(({ id }) => id === 'MCA-100-16-artigo-0125-001'));
   assert.ok(english.every(({ idioma }) => idioma.split('-').includes('en')));
   assert.ok(english.every(({ fases }) => fases.includes('solo') || fases.includes('geral')));
 });
@@ -51,7 +51,7 @@ test('fase_de_voo filtra antes do ranking sem remover trechos gerais', () => {
   const results = search.search({
     texto: 'solicito autorização para táxi', idioma: 'pt', fase_de_voo: 'rota', limite: 8,
   });
-  assert.ok(!results.some(({ id }) => id === 'MCA-100-16-art0125'));
+  assert.ok(!results.some(({ id }) => id === 'MCA-100-16-artigo-0125-001'));
   assert.ok(results.every(({ fases }) => fases.includes('rota') || fases.includes('geral')));
   assert.throws(() => search.search({
     texto: 'táxi', idioma: 'pt', fase: 'solo', fase_de_voo: 'rota',

@@ -1,8 +1,8 @@
-import { createGroundedControllerReply, detectIntent, searchPhaseForIntent } from '../src/controller.js';
 import { normalizePhraseology } from '../src/normalization.js';
+import { processTransmission } from '../src/pipeline.js';
 import { getScenario } from '../src/scenarios.js';
 import { ManualSearch } from '../src/search.js';
-import { createBrowserRecognizer, speakTransmission } from '../src/speech.js';
+import { createRecognitionSession, speakTransmission } from '../src/speech.js';
 import { applyStateUpdate, createSimulationState, recordTransmission } from '../src/state-machine.js';
 import { buildSessionReport, evaluateReadback } from '../src/training.js';
 
@@ -13,8 +13,14 @@ let idioma;
 let lastClearance = null;
 let evaluations = [];
 let voiceEnabled = true;
+let recognitionSession = null;
+let transmissionInFlight = false;
+const diagnosticMode = new URLSearchParams(location.search).has('debug');
+if (diagnosticMode) window.__ATC_DEBUG__ = [];
 
 function startScenario() {
+  recognitionSession?.abort();
+  recognitionSession = null;
   const config = getScenario($('#scenario').value);
   idioma = config.idioma;
   state = createSimulationState(config);
@@ -58,22 +64,50 @@ function renderScore() {
 }
 
 async function transmit(rawText) {
-  if (!search || !rawText.trim()) return;
+  if (!search || !rawText.trim() || transmissionInFlight) return;
+  transmissionInFlight = true;
+  try {
   const text = normalizePhraseology(rawText);
   if (lastClearance) evaluations.push(evaluateReadback({ autorizacao: lastClearance, cotejamento: text }));
   state = recordTransmission(state, { origem: 'piloto', texto: text });
   addMessage('pilot', text);
-  const phase = searchPhaseForIntent(detectIntent(text), state.fase === 'encerrado' ? 'solo' : state.fase);
-  const results = search.search({ texto: text, idioma, fase_de_voo: phase, limite: 8 });
-  const reply = createGroundedControllerReply({ text, idioma, state, searchResults: results });
+  const { decision: reply, diagnostics } = processTransmission({ text: rawText, idioma, state, search, debug: diagnosticMode });
+  if (diagnostics) window.__ATC_DEBUG__.push(diagnostics);
   if (!reply.covered) {
-    addMessage('atco', reply.spokenText, true); renderEvidence(null); renderScore(); return;
+    addMessage('atco', reply.spokenText, reply.status === 'unsupported'); renderEvidence(null); renderScore(); return;
   }
   if (reply.stateUpdate) state = applyStateUpdate(state, reply.stateUpdate);
   state = recordTransmission(state, { origem: 'atco', texto: reply.spokenText, fontes: reply.sourceIds });
   lastClearance = reply.spokenText;
   addMessage('atco', reply.spokenText); renderEvidence(reply.source); renderState(); renderScore();
   if (voiceEnabled) try { speakTransmission(reply.spokenText, { idioma }); } catch { /* UI remains usable without TTS. */ }
+  } finally {
+    transmissionInFlight = false;
+  }
+}
+
+function startPtt() {
+  if (recognitionSession || transmissionInFlight) return;
+  const button = $('#ptt');
+  try {
+    recognitionSession = createRecognitionSession({
+      idioma,
+      onInterim: (text) => { $('#transmission').value = text; },
+      onFinal: (text) => { $('#transmission').value = text; transmit(text); },
+      onError: () => addMessage('atco', 'Não foi possível concluir o reconhecimento de voz.', true),
+      onEnd: () => { recognitionSession = null; button.classList.remove('listening'); },
+    });
+    button.classList.add('listening');
+    recognitionSession.start();
+  } catch (error) {
+    recognitionSession = null;
+    button.classList.remove('listening');
+    addMessage('atco', error.message, true);
+  }
+}
+
+function stopPtt() {
+  recognitionSession?.stop();
 }
 
 $('#transmission-form').addEventListener('submit', (event) => { event.preventDefault(); const input = $('#transmission'); transmit(input.value); input.value = ''; });
@@ -81,14 +115,10 @@ document.querySelectorAll('[data-prompt]').forEach((button) => button.addEventLi
 $('#scenario').addEventListener('change', startScenario);
 $('#new-session').addEventListener('click', startScenario);
 $('#sound-toggle').addEventListener('click', () => { voiceEnabled = !voiceEnabled; $('#sound-toggle').textContent = voiceEnabled ? '◉ VOZ' : '○ MUDO'; });
-$('#ptt').addEventListener('click', () => {
-  const button = $('#ptt');
-  try {
-    const recognition = createBrowserRecognizer({ idioma, onResult: (text) => { button.classList.remove('listening'); $('#transmission').value = text; transmit(text); } });
-    recognition.onerror = () => button.classList.remove('listening'); recognition.onend = () => button.classList.remove('listening');
-    button.classList.add('listening'); recognition.start();
-  } catch (error) { addMessage('atco', error.message, true); }
-});
+$('#ptt').addEventListener('pointerdown', (event) => { event.preventDefault(); startPtt(); });
+$('#ptt').addEventListener('pointerup', stopPtt);
+$('#ptt').addEventListener('pointercancel', stopPtt);
+$('#ptt').addEventListener('click', (event) => { if (event.detail === 0) recognitionSession ? stopPtt() : startPtt(); });
 
 try {
   search = await ManualSearch.load(new URL('../atc-simulator-index.json', import.meta.url));
