@@ -33,7 +33,7 @@ export function createOpenRouterProvider({ apiKey, model, timeoutMs = 8_000, fet
           headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'X-Title': 'ATC COM SIM' },
           body: JSON.stringify({
             model, messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: JSON.stringify(payload) }],
-            temperature: 0, max_tokens: 1800,
+            temperature: 0, max_tokens: 1200, reasoning: { effort: 'none', exclude: true },
             response_format: { type: 'json_schema', json_schema: { name: 'atc_semantic_interpretation', strict: true, schema: INTERPRETATION_SCHEMA } },
           }),
         })

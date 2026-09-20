@@ -46,7 +46,12 @@ export const INTERPRETATION_SCHEMA = Object.freeze({
 function entity(value, name) {
   if (value === null) return null
   if (!value || typeof value !== 'object' || typeof value.value !== 'string' || !sources.includes(value.source) || typeof value.confidence !== 'number' || value.confidence < 0 || value.confidence > 1 || !('spoken' in value)) throw new TypeError(`Entidade semântica inválida: ${name}`)
-  const normalized = value.value.slice(0, 160)
+  let normalized = value.value.slice(0, 160).trim()
+  if (name === 'position') {
+    const digits = { zero: '0', um: '1', uma: '1', one: '1', dois: '2', duas: '2', two: '2', três: '3', tres: '3', three: '3', quatro: '4', four: '4', cinco: '5', five: '5', seis: '6', six: '6', sete: '7', seven: '7', oito: '8', eight: '8', nove: '9', nine: '9' }
+    const finalToken = normalized.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).at(-1)
+    normalized = digits[finalToken] ?? normalized.replace(/^(?:posição|posicao|position|stand)\s+/i, '')
+  }
   if (name === 'flightRules' && !['VFR', 'IFR'].includes(normalized.toUpperCase())) throw new TypeError('Regra de voo semântica inválida.')
   if (name === 'callsign' && !/^[A-Z0-9-]{2,12}$/i.test(normalized)) throw new TypeError('Indicativo semântico inválido.')
   if (name === 'frequency' && !/^\d{3}[,.]\d{1,3}$/.test(normalized)) throw new TypeError('Frequência semântica inválida.')
