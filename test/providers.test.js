@@ -10,10 +10,10 @@ test('provedor mock funciona sem segredos e respeita o idioma', async () => {
   assert.match(english, /Transmission received/)
 })
 
-test('provedores remotos falham explicitamente quando a configuração está incompleta', async () => {
+test('Voice Lab não chama provider pago ou free tier não verificado', async () => {
   await assert.rejects(
-    runProvider([{ role: 'user', content: 'Teste' }], {}, { LLM_PROVIDER: 'gemini' }),
-    /GEMINI_API_KEY e GEMINI_MODEL/,
+    runProvider([{ role: 'user', content: 'Teste' }], {}, { LLM_PROVIDER: 'groq', GROQ_API_KEY: 'test', GROQ_MODEL: 'openai/gpt-oss-20b', ZERO_COST_MODE: 'true', ALLOW_PAID_API: 'false', GROQ_FREE_TIER_CONFIRMED: 'false' }),
+    /Free tier não confirmado/,
   )
   await assert.rejects(
     runProvider([{ role: 'user', content: 'Teste' }], {}, { LLM_PROVIDER: 'desconhecido' }),

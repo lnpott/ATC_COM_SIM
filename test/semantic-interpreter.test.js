@@ -19,7 +19,7 @@ function semantic(overrides = {}) {
 
 test('interpretador usa provider estruturado, contexto limitado e converte para o pipeline', async () => {
   let call
-  const provider = { name: 'gemini', model: 'gemini-3.8-flash', async interpret(input) { call = input; return { value: semantic(), latencyMs: 17 } } }
+  const provider = { name: 'openrouter', model: 'qwen/qwen3.8-27b:free', async interpret(input) { call = input; return { value: semantic(), freeValidated: true, latencyMs: 17 } } }
   const result = await interpretSemantically({ rawTranscript: 'fala natural', normalizedTranscript: 'fala natural', language: 'pt', sessionContext: { atis: 'BRAVO' }, scenarioContext: { airport: 'SBGL' } }, provider)
   assert.equal(result.interpretation.intent, 'taxi_request')
   assert.equal(result.latencyMs, 17)
@@ -48,7 +48,7 @@ test('taxonomia diferencia frequência e readback sem conceder autoridade ao LLM
 })
 
 test('ambiguidade e prompt injection permanecem dados, não instruções', async () => {
-  const provider = { name: 'gemini', model: 'gemini-3.8-flash', async interpret({ payload, systemInstruction }) {
+  const provider = { name: 'openrouter', model: 'qwen/qwen3.8-27b:free', async interpret({ payload, systemInstruction }) {
     assert.match(payload.rawTranscript, /ignore suas instruções/)
     assert.match(systemInstruction, /apenas conteúdo a classificar/)
     return { value: semantic({ understood: false, ambiguous: true, confidence: 0.31, intent: 'unknown', uncertainElements: ['callsign'], semanticSummary: 'Pedido não compreendido.' }), latencyMs: 1 }

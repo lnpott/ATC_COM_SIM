@@ -12,12 +12,13 @@
     "audit:corpus": "node scripts/audit-corpus.mjs",
     "test": "node --test test/*.test.js",
     "test:llm": "node --test test-llm/*.test.js",
+    "test:stt": "node --test test-stt/*.test.js",
+    "benchmark:llm": "node scripts/benchmark-llm.mjs",
     "validate": "node scripts/validate-search.mjs && npm run check:index",
     "audit": "npm test && npm run validate && npm run audit:corpus && npm run build",
     "start": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "@google/genai": "^2.23.0",
     "@vitejs/plugin-react": "latest",
     "react": "latest",
     "react-dom": "latest",

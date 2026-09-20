@@ -6,7 +6,7 @@ Simulador de comunicações com ATCO's
 O frontend, construído com Vite, preserva duas experiências complementares: o
 simulador documental em `/`, com entrada por texto/PTT, cenários, evidências e
 score; e a prova de conceito React de voz em `/voice.html`. O endpoint
-`/api/interpret-transmission` e `/api/generate-reply` são funções serverless Node.js na Vercel; as credenciais permanecem exclusivamente no servidor. Em desenvolvimento, o plugin de `vite.config.js` expõe os mesmos handlers. O interpretador principal usa Gemini no servidor; o parser local existe somente como fallback identificado.
+`/api/interpret-transmission` e `/api/generate-reply` são funções serverless Node.js na Vercel; as credenciais permanecem exclusivamente no servidor. Em desenvolvimento, o plugin de `vite.config.js` expõe os mesmos handlers. O interpretador principal usa apenas providers explicitamente gratuitos; o parser local existe como fallback identificado. Nenhuma chamada Gemini integra o pipeline atual.
 
 ## Instalação e execução
 
@@ -28,20 +28,28 @@ Comandos disponíveis:
 
 ```bash
 npm test          # testes unitários e de integração
+npm run test:stt  # fixture e cadeia STT gratuita
+npm run test:llm  # OpenRouter real, somente modelos free
+npm run benchmark:llm # precisão/schema/latência apenas de candidatos free
 npm run validate  # consultas de referência e reprodutibilidade do índice
 npm run build     # build de produção em dist/
 npm run audit     # todos os comandos acima
 npm start         # serve dist/ após um build
 ```
 
-## Variáveis de ambiente
+## Variáveis de ambiente e custo zero
 
-Configure **somente no servidor** (nunca use o prefixo `VITE_`):
+`ZERO_COST_MODE=true` e `ALLOW_PAID_API=false` são invariantes desta fase. Toda
+chamada externa atravessa `server/cost-policy.js` antes da rede. OpenRouter só é
+permitido para IDs `:free` ou `openrouter/free` e ainda exige validação ao vivo de
+`pricing.prompt=0` e `pricing.completion=0`. Saldo na conta não é autorização para
+uso. Groq fica desabilitado enquanto `GROQ_FREE_TIER_CONFIRMED=false`; a existência
+de chave não comprova o tier.
 
-| Provedor | Variáveis |
-| --- | --- |
-| Gemini (padrão) | `LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.8-flash` |
-| Groq | `LLM_PROVIDER=groq`, `GROQ_API_KEY`, `GROQ_MODEL` |
+A configuração completa, sem valores secretos, está em `.env.example`. A ordem LLM
+é Groq fixo somente se o Free tier for confirmado, OpenRouter fixo `:free` primário,
+fixo `:free` secundário, `openrouter/free` e parser determinístico. Gemini não é
+usado. TTS permanece `SpeechSynthesis` do browser.
 
 ## Implantação na Vercel
 
@@ -96,47 +104,53 @@ validate` para conferir estaticamente o índice e as consultas em
 
 ## Arquitetura de compreensão
 
-Uma sessão PTT consolida o STT antes de qualquer chamada. O browser envia texto
-bruto, normalização superficial, cenário e contexto confirmado limitado para
-`POST /api/interpret-transmission`. O backend usa `@google/genai`, structured
-output JSON Schema e `gemini-3.8-flash` com thinking desabilitado, temperatura
-0,1, timeout de oito segundos e retry curto somente para 5xx.
+No fluxo de voz, `pointerdown` cria um ID e inicia MediaRecorder e o Web Speech de
+apoio. `pointerup` finaliza uma única gravação. O STT tenta Groq Whisper somente com
+Free tier confirmado, ASR local Whisper Tiny em Web Worker (WebGPU, depois WASM) e
+Web Speech como último fallback. Nenhum resultado parcial aciona o controlador.
 
-O resultado validado gera queries a partir de intenção, família, fase,
-`searchConcepts` e entidades. BM25, aliases, prior de metadados somente sobre
-resultados efetivamente encontrados, reranking e chunks vizinhos preservam IDs
-reais. O controlador determinístico exige evidência antes de autorizar e a
-máquina de estados valida a proposta. A LLM nunca autoriza nem altera estado.
+A transcrição final vai a `POST /api/interpret-transmission`. O resolver LLM valida
+o catálogo público atual antes de cada janela de cache e tenta os modelos fixos
+OpenRouter gratuitos antes de `openrouter/free`. Structured output passa pelo JSON
+Schema e pela validação local. O parser determinístico é o último fallback.
 
 ```text
-PTT → STT final → Gemini/schema → contexto → queries → BM25/reranking/vizinhos
-→ grounding → decisão → estado validado → resposta → TTS/evidências/debug
+PTT → MediaRecorder → Groq confirmado? → ASR local → Web Speech
+→ OpenRouter fixed :free → fixed :free → openrouter/free → parser local
+→ estado → queries → BM25/reranking/vizinhos → grounding → decisão
+→ estado validado → SpeechSynthesis/evidências/debug
 ```
 
-### Fallback
+O resultado semântico gera queries a partir de intenção, família, fase,
+`searchConcepts` e entidades. BM25, aliases, prior apenas sobre resultados
+realmente recuperados, reranking e chunks vizinhos preservam IDs reais. A LLM
+nunca autoriza, seleciona documento ou altera estado.
 
-Timeout, quota, 4xx/5xx, resposta vazia, JSON ou schema inválido não são tratados
-como “sem cobertura documental”. O cliente executa o interpretador determinístico
-existente e registra `interpretationMode=deterministic_fallback`; grounding e
-estado continuam obrigatórios. O fallback tem capacidade inferior e não é
-apresentado como equivalente ao modo LLM.
+### Fallback e erros
+
+Quota/429 não é repetida em avalanche: o resolver avança para o próximo candidato
+gratuito. Timeout, schema, provider e STT têm códigos distintos. Se todos falharem,
+o pipeline determinístico continua com grounding e estado obrigatórios; isso não é
+reportado como “documento ausente”.
 
 ### Debug e latência
 
-Use `/?debug=1` para habilitar `window.__ATC_DEBUG__`. Cada registro inclui IDs de
-sessão/PTT, transcrições, modo/provider/modelo, latência LLM, estrutura semântica,
-contexto limitado, queries, BM25/reranking/vizinhos, evidências, decisão, resposta,
-estado e locale TTS. Chaves, tokens e segredos nunca são incluídos. Veja a
-[decisão arquitetural](docs/ADR-001-LLM-FIRST.md).
+`/?debug=1` registra política de custo, sessão/PTT, MIME/tamanho/duração, provider,
+modelo solicitado/real, validação free, profundidade de fallback, tokens sem
+conteúdo, latências STT/LLM/retrieval/decisão/total, estrutura semântica, queries,
+rankings, evidências, decisão, estado e TTS. Nunca registra segredo.
 
 ### Testes e limitações de voz
 
-`npm run test:llm` executa a suíte opt-in real quando `GEMINI_API_KEY` existe;
-`npm test` usa provider controlado e não consome quota. O teste automatizado de
-Web Speech usa implementação controlada. Checklist humano: Chrome/Edge atual,
-HTTPS, microfone permitido; pressionar PTT, falar a frase longa, soltar e confirmar
-uma transcrição, uma interpretação e uma resposta. STT e TTS ainda dependem do
-browser, sistema operacional, microfone e vozes instaladas.
+`npm run test:llm` usa somente OpenRouter explicitamente free; Groq é skip enquanto
+o tier não puder ser comprovado. `npm run test:stt` usa a fixture WAV versionada e
+implementações controladas sem custo. Checklist humano: Chrome/Edge, HTTPS,
+permissão de microfone; pressionar PTT, falar a frase longa, soltar e confirmar uma
+gravacão, transcrição, interpretação e resposta. Microfone físico e qualidade das
+vozes continuam dependentes do dispositivo.
+
+Veja [ADR-002](docs/ADR-002-ZERO-COST.md) e a
+[decisão LLM-first original](docs/ADR-001-LLM-FIRST.md).
 
 ## Motor e módulos de treino
 

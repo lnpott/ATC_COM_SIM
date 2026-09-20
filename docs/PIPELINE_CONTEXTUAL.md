@@ -102,7 +102,7 @@ de validação humana no navegador/sistema operacional de destino.
 ## Evolução LLM-first
 
 Após nova validação humana, o parser lexical foi reposicionado como fallback. O
-caminho normal chama `POST /api/interpret-transmission`; Gemini retorna apenas uma
+caminho normal chama `POST /api/interpret-transmission`; um provider permitido pela política zero-cost retorna apenas uma
 interpretação validada pelo schema. Estado confirmado e no máximo duas mensagens
 recentes entram como contexto. A interpretação gera busca, mas não autoriza,
 seleciona evidência nem altera estado. A ADR completa está em

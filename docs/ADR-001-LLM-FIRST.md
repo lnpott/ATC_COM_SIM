@@ -1,6 +1,7 @@
 # ADR-001 — Interpretação semântica LLM-first
 
-Status antes da implementação: **aceito**.
+Status: **substituído parcialmente pela ADR-002** quanto ao provider. A separação
+LLM-first permanece; Gemini não integra mais o pipeline zero-cost.
 
 ## Arquitetura anterior e problema
 

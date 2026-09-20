@@ -46,7 +46,11 @@ export const INTERPRETATION_SCHEMA = Object.freeze({
 function entity(value, name) {
   if (value === null) return null
   if (!value || typeof value !== 'object' || typeof value.value !== 'string' || !sources.includes(value.source) || typeof value.confidence !== 'number' || value.confidence < 0 || value.confidence > 1 || !('spoken' in value)) throw new TypeError(`Entidade semântica inválida: ${name}`)
-  return { value: value.value.slice(0, 160), source: value.source, confidence: value.confidence, spoken: typeof value.spoken === 'string' ? value.spoken.slice(0, 200) : null }
+  const normalized = value.value.slice(0, 160)
+  if (name === 'flightRules' && !['VFR', 'IFR'].includes(normalized.toUpperCase())) throw new TypeError('Regra de voo semântica inválida.')
+  if (name === 'callsign' && !/^[A-Z0-9-]{2,12}$/i.test(normalized)) throw new TypeError('Indicativo semântico inválido.')
+  if (name === 'frequency' && !/^\d{3}[,.]\d{1,3}$/.test(normalized)) throw new TypeError('Frequência semântica inválida.')
+  return { value: name === 'flightRules' ? normalized.toUpperCase() : normalized, source: value.source, confidence: value.confidence, spoken: typeof value.spoken === 'string' ? value.spoken.slice(0, 200) : null }
 }
 
 export function validateInterpretation(value) {

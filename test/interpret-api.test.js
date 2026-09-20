@@ -25,11 +25,12 @@ test('endpoint retorna structured output sem expor configuração', async () => 
     runway: null, altitude: null, heading: null, frequency: null, phase: 'unknown', intent: 'unknown', intentFamily: 'unknown', requestType: 'unknown', emergency: false, readback: false,
     entities: [], missingOperationalInformation: [], uncertainElements: ['intent'], searchConcepts: ['unknown transmission'], semanticSummary: 'Não compreendida.',
   }
-  const provider = { name: 'gemini', model: 'gemini-3.8-flash', async interpret() { return { value, latencyMs: 2 } } }
-  const handler = createInterpretTransmissionHandler({ LLM_PROVIDER: 'gemini', GEMINI_API_KEY: 'must-not-leak' }, { provider })
+  const provider = { name: 'auto-free', async interpret() { return { value, provider: 'openrouter', requestedModel: 'qwen/qwen3.8-27b:free', actualModel: 'qwen/qwen3.8-27b:free', freeValidated: true, fallbackDepth: 0, reasoningMode: 'none', usage: { requestCount: 1, costChargedExpected: 0 }, latencyMs: 2 } } }
+  const handler = createInterpretTransmissionHandler({ LLM_PROVIDER: 'auto-free', OPENROUTER_API_KEY: 'must-not-leak', ZERO_COST_MODE: 'true', ALLOW_PAID_API: 'false' }, { provider })
   const result = await call(handler, { body: JSON.stringify({ rawTranscript: 'texto', normalizedTranscript: 'texto', language: 'pt', sessionContext: {}, scenarioContext: {} }) })
   assert.equal(result.statusCode, 200)
   assert.equal(result.json.interpretationMode, 'llm')
-  assert.equal(result.json.model, 'gemini-3.8-flash')
+  assert.equal(result.json.actualModel, 'qwen/qwen3.8-27b:free')
+  assert.equal(result.json.freeValidated, true)
   assert.doesNotMatch(result.body, /must-not-leak/)
 })
