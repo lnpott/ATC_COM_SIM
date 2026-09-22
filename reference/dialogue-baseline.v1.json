@@ -386,11 +386,13 @@
           "normalizado": "Roger runway 18, altimeter 1015",
           "intent": "readback",
           "confidence": 1,
-          "status": "unsupported",
-          "reason": "relevant-evidence-not-retrieved",
-          "covered": false,
-          "spokenText": "No documentary coverage for that request.",
-          "sourceIds": [],
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, readback correct.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
           "cotejamentoLegado": {
             "correto": true,
             "itens_esperados": [
@@ -401,19 +403,19 @@
             "score": 100
           },
           "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
           "frequencia": "ground",
           "posicao": "two",
           "contexto": {
-            "ultima_intencao": "taxi_request",
-            "ultima_autorizacao": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
-            "ultima_instrucao_controlador": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
-            "cotejamento_pendente": true,
+            "ultima_intencao": "readback",
+            "ultima_autorizacao": "PT-ABC, readback correct.",
+            "ultima_instrucao_controlador": "PT-ABC, readback correct.",
+            "cotejamento_pendente": false,
             "emergencia_ativa": false
           },
-          "historico": 3,
+          "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
             "caracteres": 544
@@ -433,16 +435,10 @@
             "MCA-100-16-artigo-0126-001"
           ],
           "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "qnh"
-            ],
-            "omitidos": [
-              "pista",
-              "qnh"
-            ],
-            "score": 0
+            "correto": true,
+            "itens_esperados": [],
+            "omitidos": [],
+            "score": 100
           },
           "cotejamentoSemantico": null,
           "estadoAplicado": true,
@@ -457,10 +453,10 @@
             "cotejamento_pendente": true,
             "emergencia_ativa": false
           },
-          "historico": 5,
+          "historico": 6,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 519
+            "caracteres": 441
           }
         },
         {
@@ -469,11 +465,13 @@
           "normalizado": "Roger runway 18, cleared for take-off",
           "intent": "readback",
           "confidence": 1,
-          "status": "unsupported",
-          "reason": "relevant-evidence-not-retrieved",
-          "covered": false,
-          "spokenText": "No documentary coverage for that request.",
-          "sourceIds": [],
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, readback correct.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
           "cotejamentoLegado": {
             "correto": true,
             "itens_esperados": [
@@ -483,19 +481,19 @@
             "score": 100
           },
           "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
           "frequencia": "torre",
           "posicao": "two",
           "contexto": {
-            "ultima_intencao": "takeoff_request",
-            "ultima_autorizacao": "PT-ABC, runway 18, cleared for take-off.",
-            "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared for take-off.",
-            "cotejamento_pendente": true,
+            "ultima_intencao": "readback",
+            "ultima_autorizacao": "PT-ABC, readback correct.",
+            "ultima_instrucao_controlador": "PT-ABC, readback correct.",
+            "cotejamento_pendente": false,
             "emergencia_ativa": false
           },
-          "historico": 6,
+          "historico": 8,
           "sessaoContexto": {
             "recentes": 2,
             "caracteres": 497
@@ -515,14 +513,10 @@
             "MCA-100-16-artigo-0129-001"
           ],
           "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista"
-            ],
-            "omitidos": [
-              "pista"
-            ],
-            "score": 0
+            "correto": true,
+            "itens_esperados": [],
+            "omitidos": [],
+            "score": 100
           },
           "cotejamentoSemantico": null,
           "estadoAplicado": true,
@@ -538,10 +532,10 @@
             "emergencia_ativa": false,
             "destino": "join"
           },
-          "historico": 8,
+          "historico": 10,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 501
+            "caracteres": 450
           }
         },
         {
@@ -583,7 +577,7 @@
             "emergencia_ativa": false,
             "destino": "join"
           },
-          "historico": 10,
+          "historico": 12,
           "sessaoContexto": {
             "recentes": 2,
             "caracteres": 630
@@ -628,7 +622,7 @@
             "emergencia_ativa": false,
             "destino": "join"
           },
-          "historico": 12,
+          "historico": 14,
           "sessaoContexto": {
             "recentes": 2,
             "caracteres": 518
@@ -636,12 +630,12 @@
         }
       ],
       "relatorio": {
-        "transmissoes": 12,
+        "transmissoes": 14,
         "avaliacoes": 6,
-        "score": 33,
+        "score": 67,
         "erros_recorrentes": {
-          "pista": 4,
-          "qnh": 2,
+          "pista": 2,
+          "qnh": 1,
           "proa": 1
         }
       }

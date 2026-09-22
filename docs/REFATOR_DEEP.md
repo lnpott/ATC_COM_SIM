@@ -98,10 +98,46 @@ análise inicial — o que confirma que a rede multi-turno era necessária antes
 
 | # | Achado | Evidência |
 |---|---|---|
-| A3.14 | **Cotejamento não tem fonte citável em inglês** | `MCA-100-16-artigo-0012-001` (art. 12, a provisão de cotejamento) tem `idioma: pt`. Dos 374 chunks, só 119 são alcançáveis em inglês (100 `pt-en` + 19 `en`) e nenhum deles trata de cotejamento. Resultado no roteiro EN: os dois turnos de cotejamento voltam `unsupported` — o mesmo ato operacional é documentado em PT e "sem cobertura" em EN. Não é ausência real de cobertura: é lacuna bilíngue do corpus/índice. |
+| A3.14 (resolvido) | **Cotejamento não tem fonte citável em inglês** | `MCA-100-16-artigo-0012-001` (art. 12, a provisão de cotejamento) tem `idioma: pt`. Dos 374 chunks, só 119 são alcançáveis em inglês (100 `pt-en` + 19 `en`) e nenhum deles trata de cotejamento. Resultado no roteiro EN: os dois turnos de cotejamento voltam `unsupported` — o mesmo ato operacional é documentado em PT e "sem cobertura" em EN. Não é ausência real de cobertura: é lacuna bilíngue do corpus/índice. |
 | A3.15 | **Cotejamento vira "solicitação nova"** | "Ciente, mudança de frequência aprovada" → `frequency_change` / `documented` (o controlador **reautoriza**) em vez de cotejamento; "Ciente saída VFR setor norte" → `vfr_departure` / `documented`. O parser determinístico pontua a solicitação nova igual ou acima do cotejamento, então a separação intenção/autorização do §12 é violada **antes** de o avaliador de cotejamento rodar. |
 | A3.16 | **Ambiguidade criada pelo próprio pipeline** | Contém "mayday" → `scoreIntent` força `emergency` a 0.98, então "Ciente Mayday, pista 15 disponível" vira `ambiguous` → `not_understood`; "Ciente, ingresso no circuito pista 18" (cotejamento aguardado após autorização de circuito) empata com `traffic_circuit` → `ambiguous`. São exatamente os casos em que §4/§5 esperam que o **contexto** resolva a ambiguidade — hoje há contexto disponível e ele não é usado. |
 | A3.17 | **Autorização emitida sem transição de estado válida** | No roteiro `pt_ifr_partida_emergencia_com_fogo`, um pedido de pouso é respondido `documented` com `fase=decolagem` e a fase **não** muda (`updates.landing_request` só transiciona a partir de `aproximacao`). O controlador autoriza pouso sem o estado acompanhar — falha do §11 (estado validado como fonte da verdade). |
+
+### A.3.1 Resolução de A3.14 (fatia do F1 executada logo após o F0)
+
+**Investigação** (§7: verificar se o conhecimento já existe antes de criar regra nova):
+
+- o texto normativo do manual não tem coluna em inglês — arts. 1–20 são 19/19 `pt`, e a coluna em
+  inglês existe nas tabelas de fraseologia (arts. 100–160: 46 de 61 são `pt-en`);
+- das 9 fontes normativas mapeadas por intenção, **8 são `pt-en`**; a única exclusivamente `pt` é o
+  **art. 12 (cotejamento)** — e o art. 45, provisão redundante, também é `pt`;
+- nenhum chunk enuncia a obrigação de cotejar em inglês (busca por *shall/must be read back*:
+  0 resultados). Logo **não há** falha de extração específica do art. 12, e traduzir o artigo por
+  conta própria criaria texto normativo inexistente — proibido pela regra de ouro;
+- **porém o corpus documenta o ato em inglês por dois outros caminhos**: `MCA-100-16-artigo-0039-001`
+  (glossário `pt-en`, "COTEJE / READ BACK") e `MCA-100-16-artigo-0138-001` (`pt-en`,
+  "cotejamento correto / your read back is correct").
+
+**Correção** (não altera o corpus e não inventa conhecimento): recuperação ciente de idioma em
+`src/retrieval.js`. Quando a língua da sessão não recupera a fonte normativa esperada, o BM25 roda
+com os termos documentados do perfil na **língua original** e a fonte entra na evidência marcada com
+`retrievalReasons: ['original-language-fallback']` e `diagnostics.originalLanguageFallback`. O artigo
+**nunca** é injetado por ID (preserva `docs/PIPELINE_CONTEXTUAL.md`), a passagem só ocorre quando a
+causa é de língua — se a fonte foi recuperada e ficou fora da janela, a causa é de ranking e o rótulo
+não mente — e o residual honesto permanece (`weather_request` continua `unsupported`).
+
+**Efeito verificado.** `test/readback-language-coverage.test.js` (6 casos). As 42 diferenças na
+caracterização do F0 ficaram **todas** no roteiro `en_vfr_local_ciclo_completo` — zero em PT e nos
+demais roteiros —, foram classificadas como pretendidas e a baseline foi regenerada de forma
+deliberada. Distribuição de status: `unsupported` 3 → 1.
+
+**Pendência residual (F1).** A realização da fala em inglês ainda usa texto fixo ("readback
+correct"), embora o art. 138 já forneça a fraseologia documentada nos dois idiomas; o compositor do
+F1 deve citá-la.
+
+**Escopo.** Esta é a primeira mudança em produção do plano e pertence ao F1 (camada de
+conhecimento). Foi executada antecipadamente porque não depende do resto do F1 e fecha uma lacuna
+que produzia falso "sem cobertura documental".
 
 ### A.4 O que existe no `App.jsx` com valor a preservar (§17)
 
