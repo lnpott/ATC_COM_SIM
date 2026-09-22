@@ -22,7 +22,9 @@ const unseen = [
   ['en', 'rota', 'PT-ABC inbound from the east, join the traffic pattern requested', 'traffic_circuit', 'MCA-100-16-artigo-0129-001'],
   ['pt', 'rota', 'Controle, PT-ABC requer procedimento RNAV de aproximação', 'approach_request', 'MCA-100-16-artigo-0114-001'],
   ['en', 'aproximacao', 'PT-ABC established final, landing clearance requested', 'landing_request', 'MCA-100-16-artigo-0132-001'],
-  ['pt', 'rota', 'Pan pan, PT-ABC, emergência por fogo no motor', 'emergency', 'MCA-100-16-artigo-0064-001'],
+  // "fogo no motor" cita o art. 66 (incêndio a bordo) junto do art. 43 (vocabulário de
+  // emergência que contém "fogo"), e não mais só o art. 64 (falha de motor). PLANO_REF §7.
+  ['pt', 'rota', 'Pan pan, PT-ABC, emergência por fogo no motor', 'emergency', ['MCA-100-16-artigo-0066-001', 'MCA-100-16-artigo-0043-001']],
   ['en', 'rota', 'Control PT-ABC requesting a change to frequency 124.70', 'frequency_change', 'MCA-100-16-artigo-0059-001'],
   ['pt', 'solo', 'PT-ABC pretende saída VFR pelo setor oeste', 'vfr_departure', 'MCA-100-16-artigo-0122-001'],
   ['en', 'solo', 'PT-ABC outbound VFR to the east sector', 'vfr_departure', 'MCA-100-16-artigo-0122-001'],
@@ -33,7 +35,7 @@ test(`avalia ${unseen.length} formulações inéditas sem overfitting`, () => {
     const result = processTransmission({ text, idioma, state: state(idioma, fase), search })
     assert.equal(result.interpretation.intent, intent, text)
     assert.equal(result.decision.status, 'documented', text)
-    assert.deepEqual(result.decision.sourceIds, [source], text)
+    assert.deepEqual(result.decision.sourceIds, [].concat(source), text)
   }
 })
 

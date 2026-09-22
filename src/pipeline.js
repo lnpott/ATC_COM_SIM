@@ -1,19 +1,24 @@
 import { createGroundedControllerReply } from './controller.js'
+import { resolveDialogueInterpretation } from './dialogue.js'
+import { formulateSearch } from './knowledge.js'
 import { normalizePhraseology } from './normalization.js'
-import { formulateSearch, retrieveHybrid } from './retrieval.js'
+import { retrieveHybrid } from './retrieval.js'
 import { interpretTransmission } from './transmission.js'
 
 export function processTransmission({ text, idioma, state, search, debug = false, interpretation: suppliedInterpretation, semanticMeta, sessionId, pttSessionId, sttCompletionMs, audioMeta, sttMeta, totalStartedAt }) {
   const normalizedText = normalizePhraseology(text)
   // Entity extraction uses the original utterance because the legacy phonetic
   // normalizer intentionally collapses words such as "Bravo" into "B".
-  const interpretation = suppliedInterpretation ?? interpretTransmission(text, { idioma, state })
+  const lexical = suppliedInterpretation ?? interpretTransmission(text, { idioma, state })
+  // A memória da sessão resolve a interpretação antes da recuperação: um cotejamento busca
+  // como cotejamento, não como o léxico que empatou com ele (A3.16).
+  const { interpretation, dialogue } = resolveDialogueInterpretation(lexical, { state, text })
   const searchPlan = formulateSearch(interpretation, state)
   const retrievalStarted = performance.now()
   const retrieval = retrieveHybrid(search, searchPlan, { idioma, limite: 8 })
   const retrievalLatency = Math.round((performance.now() - retrievalStarted) * 100) / 100
   const decisionStarted = performance.now()
-  const decision = createGroundedControllerReply({ text: normalizedText, idioma, state, searchResults: retrieval.expanded, interpretation })
+  const decision = createGroundedControllerReply({ text: normalizedText, idioma, state, searchResults: retrieval.expanded, interpretation, plan: searchPlan })
   const decisionLatency = Math.round((performance.now() - decisionStarted) * 100) / 100
   const diagnostics = {
     zeroCostMode: true, allowPaidApi: false, sessionId, pttSessionId,
@@ -32,6 +37,7 @@ export function processTransmission({ text, idioma, state, search, debug = false
     intent: interpretation.intent,
     confidence: interpretation.confidence,
     entities: Object.fromEntries(Object.entries(interpretation).filter(([key, value]) => !['rawText', 'candidates', 'unknownElements'].includes(key) && value !== undefined)),
+    lexicalIntent: lexical.intent,
     ambiguity: interpretation.intent === 'ambiguous', sessionContextUsed: semanticMeta?.sessionContextUsed ?? null,
     normalizedQuery: searchPlan.normalized, queriesGenerated: retrieval.diagnostics.queries,
     bm25Results: retrieval.lexical.map(({ id, score }) => ({ id, score })),
@@ -39,6 +45,10 @@ export function processTransmission({ text, idioma, state, search, debug = false
     reranked: retrieval.diagnostics.afterRerank,
     expandedContext: retrieval.expanded.map(({ id, relatedTo }) => ({ id, relatedTo })),
     evidenceUsed: decision.sourceIds,
+    evidenceCitation: decision.coverage?.citation ?? null,
+    coverageVariant: decision.coverage?.variant?.id ?? null,
+    dialogueAct: decision.dialogueAct ?? null,
+    pendingQuestion: decision.pendingQuestion?.field ?? null,
     decision: decision.status,
     reason: decision.reason,
     stateUpdate: decision.stateUpdate,

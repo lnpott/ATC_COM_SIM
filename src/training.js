@@ -16,7 +16,8 @@ export function evaluateReadback({ autorizacao, cotejamento }) {
   return { correto: omitidos.length === 0, itens_esperados: expected, omitidos, score: expected.length ? Math.round(100 * (expected.length - omitidos.length) / expected.length) : 100 };
 }
 
-function operationalValues(text) {
+/** Valores operacionais reconhecíveis em uma fala (usado pelo cotejamento e pelo diálogo). */
+export function operationalValues(text) {
   const normalized = text.toLocaleLowerCase('pt-BR').replace(',', '.')
   const patterns = {
     pista: /(?:pista|runway)\s*(\d{1,2}[lrc]?)/i,

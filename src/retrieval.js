@@ -1,74 +1,51 @@
-const PROFILES = Object.freeze({
-  taxi_request: { phase: 'solo', source: 'MCA-100-16-artigo-0125-001', pt: ['instruções táxi solicitação autorização ponto espera'], en: ['taxi instructions request clearance holding point'] },
-  takeoff_request: { phase: 'decolagem', source: 'MCA-100-16-artigo-0126-001', pt: ['instruções decolagem pronto partida autorização'], en: ['takeoff departure ready clearance runway'] },
-  traffic_circuit: { phase: 'aproximacao', source: 'MCA-100-16-artigo-0129-001', pt: ['entrada circuito tráfego autorização pista vento qnh'], en: ['join traffic pattern clearance runway wind altimeter'] },
-  approach_request: { phase: 'aproximacao', source: 'MCA-100-16-artigo-0114-001', pt: ['autorização aproximação procedimento'], en: ['approach clearance procedure'] },
-  landing_request: { phase: 'pouso', source: 'MCA-100-16-artigo-0132-001', pt: ['autorização pouso pista final vento'], en: ['landing clearance runway final wind'] },
-  emergency: { phase: 'emergencia', source: 'MCA-100-16-artigo-0064-001', pt: ['mayday emergência falha motor posição intenção'], en: ['mayday emergency engine failure position intentions'] },
-  frequency_change: { phase: 'rota', source: 'MCA-100-16-artigo-0059-001', pt: ['troca frequência aprovada comunicação subida descida'], en: ['frequency change approved communication climb descent'] },
-  vfr_departure: { phase: 'solo', source: 'MCA-100-16-artigo-0122-001', pt: ['informações partida voo VFR pista qnh'], en: ['departure information VFR runway altimeter'] },
-  readback: { phase: 'solo', source: 'MCA-100-16-artigo-0012-001', pt: ['cotejamento autorização pista táxi frequência'], en: ['readback clearance runway taxi frequency'] },
-  weather_request: { phase: 'geral', pt: ['solicitação meteorologia detalhada'], en: ['detailed weather request'] },
-})
-
 /**
- * Língua original dos documentos da base (MCA 100-16 e ICA 100-12): os artigos
- * normativos são redigidos em português. A coluna em inglês do manual cobre a
- * fraseologia, não todo o texto regulamentar.
+ * Recuperação híbrida (BM25 + consultas de intenção + prior de metadados + vizinhos) e busca
+ * ciente de idioma.
+ *
+ * A formulação da consulta saiu daqui para `src/knowledge.js` (F1): o plano de busca agora vem
+ * da regra documental da intenção. Este módulo permanece responsável apenas por **recuperar**.
+ *
+ * Língua: os documentos de base são brasileiros (MCA 100-16, ICA 100-12). O texto normativo é
+ * redigido em português e a coluna em inglês cobre a fraseologia, mas o metadado `idioma` do
+ * corpus não é uniforme nesse ponto (ver A3.14 e A3.18 em docs/REFATOR_DEEP.md). Por isso, se a
+ * língua da sessão não recuperar uma fonte normativa esperada, a busca tenta as demais línguas
+ * com o vocabulário documentado do próprio perfil e aceita o resultado **apenas se o BM25 o
+ * tiver realmente recuperado** — o artigo nunca é injetado por ID (`docs/PIPELINE_CONTEXTUAL.md`).
  */
 export const ORIGINAL_LANGUAGE = 'pt'
+export const SEARCH_LANGUAGES = Object.freeze(['pt', 'en'])
 export const ORIGINAL_LANGUAGE_REASON = 'original-language-fallback'
+export const OTHER_LANGUAGE_REASON = 'other-language-fallback'
 
 function publicResult(chunk, score, extra = {}) {
   return { id: chunk.id, documento: chunk.doc, artigo: chunk.artigo, idioma: chunk.idioma, fases: [...chunk.fases], score: Number(score.toFixed(6)), texto: chunk.texto, ...extra }
 }
 
-export function formulateSearch(interpretation, state) {
-  const profile = PROFILES[interpretation.intent]
-  if (!profile) return { original: interpretation.rawText, intent: interpretation.intent, normalized: (interpretation.searchConcepts ?? []).join(' '), aliases: interpretation.searchConcepts ?? [], phase: interpretation.flightPhase ?? state.fase, targetSource: undefined }
-  const language = interpretation.language === 'en' ? 'en' : 'pt'
-  const entities = [interpretation.flightRules, interpretation.destination, interpretation.runway].filter(Boolean)
-  const semanticConcepts = (interpretation.searchConcepts ?? []).filter((concept) => typeof concept === 'string').slice(0, 10)
-  return {
-    original: interpretation.rawText,
-    intent: interpretation.intent,
-    normalized: [...semanticConcepts, ...profile[language], ...entities].join(' '),
-    aliases: [...semanticConcepts, ...profile[language]],
-    phase: profile.phase ?? interpretation.flightPhase ?? state.fase,
-    targetSource: profile.source,
-  }
-}
-
 /**
- * Recupera a fonte normativa na língua original do manual quando a língua da sessão
- * não a alcança.
- *
- * Motivo (lacuna A3.14 de docs/REFATOR_DEEP.md): a provisão de cotejamento — MCA 100-16
- * art. 12 (III, § 1º e § 2º) e art. 45 — só existe na coluna em português, porque os
- * artigos normativos do manual (arts. 1 a 55) não têm tradução; a coluna em inglês cobre
- * as tabelas de fraseologia. Sem esta passagem, uma sessão em inglês declara "ausência de
- * cobertura documental" para um ato que ESTÁ documentado, o que o PLANO_REF §10 proíbe.
- *
- * O conceito e a fraseologia correspondente existem nos dois idiomas no próprio corpus:
- * art. 39 (glossário pt-en, "COTEJE / READ BACK") e art. 138 (pt-en, "cotejamento
- * correto / your read back is correct").
- *
- * A busca é feita com os termos documentados do perfil na língua original e só aceita o
- * resultado se o BM25 realmente o tiver recuperado: o artigo nunca é injetado por ID
- * (ver docs/PIPELINE_CONTEXTUAL.md).
+ * Fontes normativas esperadas que a língua da sessão não alcançou, buscadas nas demais línguas.
+ * Só entram resultados realmente recuperados pelo BM25; o motivo registra a língua de origem.
  */
-function findOriginalLanguageSource(search, plan, idioma) {
-  if (!plan.targetSource || idioma === ORIGINAL_LANGUAGE) return null
-  const profile = PROFILES[plan.intent]
-  if (!profile) return null
-  const [recovered] = search.search({ texto: profile[ORIGINAL_LANGUAGE].join(' '), idioma: ORIGINAL_LANGUAGE, fase_de_voo: plan.phase, limite: 8 }).filter(({ id }) => id === plan.targetSource)
-  if (!recovered) return null
-  return { ...recovered, retrievalReasons: [ORIGINAL_LANGUAGE_REASON] }
+function findCrossLanguageSources(search, plan, idioma, recoveredIds) {
+  const missing = (plan.expectedSources ?? []).filter((id) => !recoveredIds.has(id))
+  if (!missing.length || !plan.rule) return null
+  const found = []
+  for (const language of SEARCH_LANGUAGES.filter((candidate) => candidate !== idioma)) {
+    const terms = plan.rule.queries?.[language]
+    if (!terms?.length) continue
+    const results = search.search({ texto: terms.join(' '), idioma: language, fase_de_voo: plan.phase, limite: 8 })
+    for (const result of results) {
+      if (!missing.includes(result.id) || found.some(({ id }) => id === result.id)) continue
+      found.push({ ...result, retrievalReasons: [language === ORIGINAL_LANGUAGE ? ORIGINAL_LANGUAGE_REASON : OTHER_LANGUAGE_REASON] })
+    }
+  }
+  return found.length ? found : null
 }
 
 /** Combines lexical BM25, normalized intent queries, metadata priors and logical neighbors. */
 export function retrieveHybrid(search, plan, { idioma = 'pt', limite = 8 } = {}) {
-  if (!plan.normalized) return { results: [], lexical: [], expanded: [], diagnostics: { queries: [plan.original], targetSource: plan.targetSource, originalLanguageFallback: false, fallbackSourceIds: [] } }
+  const emptyDiagnostics = { queries: [plan.original], targetSource: plan.expectedSources?.[0] ?? undefined, expectedSources: plan.expectedSources ?? [], originalLanguageFallback: false, fallbackSourceIds: [], fallbackLanguages: [] }
+  if (!plan.normalized) return { results: [], lexical: [], expanded: [], diagnostics: emptyDiagnostics }
+
   const queries = [plan.original, plan.normalized, ...plan.aliases]
   const runs = queries.map((texto) => search.search({ texto, idioma, fase_de_voo: plan.phase, limite: 8 }))
   const merged = new Map()
@@ -78,27 +55,33 @@ export function retrieveHybrid(search, plan, { idioma = 'pt', limite = 8 } = {})
     current.reasons.push(runIndex === 0 ? 'bm25-original' : 'intent-query')
     merged.set(result.id, current)
   }))
-  // Metadata boosts only a document that was actually found by a retrieval run;
-  // it never injects an article solely because an intent suggested it.
-  const target = plan.targetSource && merged.get(plan.targetSource)
-  if (target) { target.hybridScore += 0.3; target.reasons.push('intent-metadata') }
+  // Metadata boosts only a document that was actually found by a retrieval run; it never injects
+  // an article solely because an intent suggested it.
+  const expected = (plan.expectedSources ?? []).filter((id) => merged.get(id))
+  for (const id of expected) { const target = merged.get(id); target.hybridScore += 0.3; target.reasons.push('intent-metadata') }
+
   const ranked = [...merged.values()].sort((a, b) => b.hybridScore - a.hybridScore || b.score - a.score)
   const selected = ranked.slice(0, limite).map(({ hybridScore, reasons, ...result }) => ({ ...result, score: Number(hybridScore.toFixed(6)), retrievalReasons: [...new Set(reasons)] }))
+
   // Evidência normativa fora da língua da sessão não é caso de ranking: ela entra para que a
   // decisão possa citar a fonte real, e o diagnóstico registra o motivo. A passagem só ocorre
   // quando a língua da sessão **não** recuperou a fonte esperada; se ela foi recuperada e ficou
-  // fora da janela, a causa é de ranking, não de língua, e o rótulo não pode mentir.
-  const recoveredInSessionLanguage = Boolean(plan.targetSource && merged.has(plan.targetSource))
-  const originalLanguageSource = recoveredInSessionLanguage ? null : findOriginalLanguageSource(search, plan, idioma)
-  if (originalLanguageSource) selected.push(originalLanguageSource)
+  // fora da janela, a causa é de ranking e o rótulo não pode mentir.
+  const crossLanguage = findCrossLanguageSources(search, plan, idioma, new Set(merged.keys()))
+  if (crossLanguage) selected.push(...crossLanguage)
   const expanded = expandContext(search.index.chunks, selected, idioma)
+
   return {
     results: selected,
     lexical: runs[0],
     expanded,
     diagnostics: {
-      queries, targetSource: plan.targetSource,
-      originalLanguageFallback: Boolean(originalLanguageSource), fallbackSourceIds: originalLanguageSource ? [originalLanguageSource.id] : [],
+      queries,
+      targetSource: plan.expectedSources?.[0] ?? undefined,
+      expectedSources: plan.expectedSources ?? [],
+      originalLanguageFallback: Boolean(crossLanguage?.some(({ retrievalReasons }) => retrievalReasons.includes(ORIGINAL_LANGUAGE_REASON))),
+      fallbackSourceIds: crossLanguage?.map(({ id }) => id) ?? [],
+      fallbackLanguages: crossLanguage ? [...new Set(crossLanguage.map(({ idioma: chunkLanguage }) => (chunkLanguage.split('-').includes('pt') ? 'pt' : 'en')))] : [],
       beforeRerank: [...merged.values()].map(({ id, score, hybridScore }) => ({ id, lexicalScore: score, hybridScore: Number(hybridScore.toFixed(6)) })),
       afterRerank: selected.map(({ id, score, retrievalReasons }) => ({ id, score, retrievalReasons })),
     },
@@ -118,5 +101,3 @@ function expandContext(chunks, results, idioma) {
   }
   return [...byId.values()]
 }
-
-export function retrievalProfile(intent) { return PROFILES[intent] }

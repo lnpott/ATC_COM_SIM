@@ -3,7 +3,10 @@ import { tokenize } from './search.js'
 const FOLD = (value) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('pt-BR')
 
 const INTENTS = Object.freeze({
-  emergency: { concepts: [['mayday', 'emergenc', 'socorro'], ['falha', 'failure', 'fogo', 'fire', 'pane']], phase: 'emergencia' },
+  // A declaração de emergência é reconhecida tanto pelo prefixo padronizado (MAYDAY) quanto
+  // pelo próprio objeto da emergência (fogo, fumaça, pane): a Tabela 15 do art. 43 lista
+  // "Fogo a bordo / Fire on board" e "Pane de motor / Engine failure" como declarações.
+  emergency: { concepts: [['mayday', 'emergenc', 'socorro', 'fogo', 'fire', 'fumaça', 'fumaca', 'smoke', 'incêndio', 'incendio'], ['falha', 'failure', 'fogo', 'fire', 'pane']], phase: 'emergencia' },
   taxi_request: { concepts: [['taxi', 'taxie', 'taxiing', 'movimenta'], ['solicit', 'request', 'pronto', 'ready', 'instruc']], phase: 'solo' },
   takeoff_request: { concepts: [['decol', 'takeoff', 'partida', 'departure'], ['pronto', 'ready', 'solicit', 'request']], phase: 'decolagem' },
   traffic_circuit: { concepts: [['circuito', 'pattern', 'downwind', 'perna'], ['ingress', 'join', 'entrada', 'enter']], phase: 'aproximacao' },

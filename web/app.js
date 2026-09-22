@@ -107,11 +107,17 @@ async function transmit(rawText, { pttSessionId = null, sttCompletionMs = null, 
   if (pttSessionId) setPttState('responding');
   if (diagnostics) window.__ATC_DEBUG__.push(diagnostics);
   if (!reply.covered) {
-    addMessage('atco', reply.spokenText, reply.status === 'unsupported'); renderEvidence(null); renderScore(); return;
+    // A resposta sem cobertura também pode alterar o estado (a pergunta pendente da sessão, §4/§5).
+    // Descartar a atualização aqui fazia o navegador perder a memória que o pipeline registrou.
+    if (reply.stateUpdate) state = applyStateUpdate(state, reply.stateUpdate);
+    state = recordTransmission(state, { origem: 'atco', texto: reply.spokenText, fontes: reply.sourceIds });
+    addMessage('atco', reply.spokenText, ['coverage_insufficient', 'external_source_unavailable'].includes(reply.status));
+    renderEvidence(null); renderState(); renderScore(); return;
   }
   if (reply.stateUpdate) state = applyStateUpdate(state, reply.stateUpdate);
   state = recordTransmission(state, { origem: 'atco', texto: reply.spokenText, fontes: reply.sourceIds });
-  lastClearance = reply.spokenText;
+  // Cotejamento não emite autorização nova: preserva a última autorização de verdade.
+  if (reply.dialogueAct !== 'readback') lastClearance = reply.spokenText;
   addMessage('atco', reply.spokenText); renderEvidence(reply.source); renderState(); renderScore();
   if (voiceEnabled) try {
     const ttsStartedAt = performance.now(); const utterance = speakTransmission(reply.spokenText, { idioma });

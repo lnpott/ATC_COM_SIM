@@ -29,7 +29,7 @@ export function applyStateUpdate(state, update) {
   }
   if (update.frequencia) next.frequencia = update.frequencia;
   if (update.contexto) {
-    const allowed = new Set(['atis', 'regras_voo', 'destino', 'ultima_intencao', 'ultima_autorizacao', 'ultima_instrucao_controlador', 'cotejamento_pendente', 'emergencia_ativa']);
+    const allowed = new Set(['atis', 'regras_voo', 'destino', 'ultima_intencao', 'ultima_autorizacao', 'ultima_instrucao_controlador', 'cotejamento_pendente', 'pergunta_pendente', 'emergencia_ativa']);
     for (const key of Object.keys(update.contexto)) {
       if (!allowed.has(key)) throw new TypeError(`campo de contexto não atualizável: ${key}.`);
     }

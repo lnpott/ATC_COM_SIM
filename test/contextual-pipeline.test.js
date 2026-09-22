@@ -98,7 +98,7 @@ test(`pipeline recupera e cita a fonte pertinente em ${groundedCases.length} cas
   }
 })
 
-test('diferencia intenção desconhecida, informação faltante e ausência real de cobertura', () => {
+test('diferencia intenção desconhecida, dado de sessão faltante e fonte externa não integrada', () => {
   const unknown = processTransmission({ text: 'xenobiologia quântica marciana', idioma: 'pt', state: stateFor(), search })
   assert.equal(unknown.decision.status, 'not_understood')
   assert.doesNotMatch(unknown.decision.spokenText, /cobertura documental/i)
@@ -109,13 +109,16 @@ test('diferencia intenção desconhecida, informação faltante e ausência real
   assert.deepEqual(permission.decision.sourceIds, ['MCA-100-16-artigo-0059-001'])
 
   const assignment = processTransmission({ text: 'solicito a frequência', idioma: 'pt', state: stateFor('rota'), search })
-  assert.equal(assignment.decision.status, 'operational_context_missing')
+  assert.equal(assignment.decision.status, 'session_context_missing')
   assert.equal(assignment.decision.reason, 'controller-frequency-not-configured')
   assert.doesNotMatch(assignment.decision.spokenText, /confirme/i)
 
-  const unsupported = processTransmission({ text: 'solicito meteorologia detalhada', idioma: 'pt', state: stateFor(), search })
-  assert.equal(unsupported.decision.status, 'unsupported')
-  assert.match(unsupported.decision.spokenText, /cobertura documental/)
+  // O texto antigo ("Não há cobertura documental.") atribuía ao corpus uma lacuna que é de
+  // integração: a meteorologia tem fonte normativa, o dado é que vem de fora (PLANO_REF §9).
+  const external = processTransmission({ text: 'solicito meteorologia detalhada', idioma: 'pt', state: stateFor(), search })
+  assert.equal(external.decision.status, 'external_source_unavailable')
+  assert.match(external.decision.spokenText, /fonte externa/)
+  assert.doesNotMatch(external.decision.spokenText, /cobertura documental/i)
 })
 
 test('estado conserva contexto validado e não o compartilha entre sessões', () => {
@@ -169,7 +172,7 @@ test('mudança de frequência é autorização do controlador, não dado obrigat
 
   for (const [idioma, text] of [['pt', 'solicito a frequência'], ['en', 'request the transfer frequency']]) {
     const result = processTransmission({ text, idioma, state: stateFor('rota', idioma), search })
-    assert.equal(result.decision.status, 'operational_context_missing')
+    assert.equal(result.decision.status, 'session_context_missing')
     assert.equal(result.decision.reason, 'controller-frequency-not-configured')
     assert.doesNotMatch(result.decision.spokenText, /confirme|confirm/i)
     assert.equal(result.decision.stateUpdate, null)

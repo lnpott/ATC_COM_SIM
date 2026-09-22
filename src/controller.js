@@ -1,5 +1,28 @@
-import { interpretTransmission } from './transmission.js';
-import { evaluateReadbackSemantic } from './training.js';
+/**
+ * Controlador (F1) — orquestrador determinístico da resposta do controlador.
+ *
+ * Ordem de execução, espelhando o pipeline desejado no §19 do PLANO_REF:
+ *
+ *   interpretação → diálogo (estado/expec tativa) → conhecimento (cobertura documental)
+ *   → decisão operacional → realização linguística → atualização validada de estado
+ *
+ * O LLM participa apenas da interpretação. A decisão vem da documentação recuperada e a
+ * realização reproduz fraseologia citada; nenhuma das duas inventa procedimento.
+ *
+ * Mudanças de F1 em relação ao controlador anterior:
+ * - deixa de existir `SOURCE_BY_INTENT` (intent → artigo único fixo): a cobertura é resolvida
+ *   por variante documentada em `src/knowledge/`;
+ * - `missingOperationalInformation` deixa de ser descartado: informação que falta vira pergunta
+ *   registrada no estado (`pergunta_pendente`), e a comunicação seguinte é avaliada contra ela;
+ * - o texto falado passa a vir de `src/phraseology.js`, com citação documental por realização;
+ * - a taxonomia de cobertura substitui o antigo `unsupported`, que afirmava ausência de cobertura
+ *   no manual mesmo quando o artigo existia (A3.1).
+ */
+import { interpretTransmission } from './transmission.js'
+import { evaluateReadbackSemantic } from './training.js'
+import { COVERAGE, formulateSearch, resolveCoverage } from './knowledge.js'
+import { DIALOGUE_ACT, createPendingQuestion, evaluateDialogue, pendingContextUpdate } from './dialogue.js'
+import { compose } from './phraseology.js'
 
 const INTENTS = [
   { name: 'emergencia', terms: ['mayday', 'pan pan', 'emergência', 'emergency', 'falha de motor'], source: 'MCA-100-16-artigo-0064-001' },
@@ -7,108 +30,155 @@ const INTENTS = [
   { name: 'decolagem', terms: ['decolagem', 'partida', 'departure', 'take-off'], source: 'MCA-100-16-artigo-0126-001' },
   { name: 'aproximacao', terms: ['aproximação', 'aproximacao', 'approach', 'ils'], source: 'MCA-100-16-artigo-0114-001' },
   { name: 'pouso', terms: ['pouso', 'landing', 'final'], source: 'MCA-100-16-artigo-0132-001' },
-];
+]
 
+const LEGACY_NAMES = { taxi: 'taxi_request', decolagem: 'takeoff_request', aproximacao: 'approach_request', pouso: 'landing_request', emergencia: 'emergency' }
+
+/** Detecção lexical legada. Mantida apenas para comparação histórica e para o caminho sem interpretação. */
 export function detectIntent(text) {
-  const normalized = text.toLocaleLowerCase('pt-BR');
-  return INTENTS.find(({ terms }) => terms.some((term) => normalized.includes(term))) ?? null;
+  const normalized = text.toLocaleLowerCase('pt-BR')
+  return INTENTS.find(({ terms }) => terms.some((term) => normalized.includes(term))) ?? null
 }
 
 export function searchPhaseForIntent(intent, currentPhase) {
-  return ({ taxi: 'solo', decolagem: 'decolagem', aproximacao: 'aproximacao', pouso: 'pouso', emergencia: 'emergencia' })[intent?.name] ?? currentPhase;
+  return ({ taxi: 'solo', decolagem: 'decolagem', aproximacao: 'aproximacao', pouso: 'pouso', emergencia: 'emergencia' })[intent?.name] ?? currentPhase
 }
 
 export function createGroundedControllerReply(input) {
-  return decideGroundedReply(input);
+  return decideGroundedReply(input)
 }
 
-const SOURCE_BY_INTENT = {
-  emergency: 'MCA-100-16-artigo-0064-001',
-  taxi_request: 'MCA-100-16-artigo-0125-001',
-  takeoff_request: 'MCA-100-16-artigo-0126-001',
-  traffic_circuit: 'MCA-100-16-artigo-0129-001',
-  approach_request: 'MCA-100-16-artigo-0114-001',
-  landing_request: 'MCA-100-16-artigo-0132-001',
-  frequency_change: 'MCA-100-16-artigo-0059-001',
-  vfr_departure: 'MCA-100-16-artigo-0122-001',
-  readback: 'MCA-100-16-artigo-0012-001',
-};
+function missingInformationReply({ language, requirement, state, intent }) {
+  const composed = compose(requirement.question, { language, state })
+  const pending = createPendingQuestion({ requirement, intent, citation: composed.citation })
+  return {
+    covered: false,
+    status: COVERAGE.NEEDS_CLARIFICATION,
+    reason: `missing:${requirement.field}`,
+    spokenText: composed.text,
+    sourceIds: [],
+    stateUpdate: pendingContextUpdate(pending),
+    source: null,
+    pendingQuestion: pending,
+  }
+}
 
-const LEGACY_NAMES = { taxi: 'taxi_request', decolagem: 'takeoff_request', aproximacao: 'approach_request', pouso: 'landing_request', emergencia: 'emergency' };
+/**
+ * Comunicação incompatível com a pergunta pendente (§5): o controlador permanece no contexto e
+ * reformula o pedido — não trata a fala como solicitação nova só porque contém palavras
+ * compreensíveis, e não finge que ela respondeu.
+ */
+function pendingQuestionReply({ language, pending, state }) {
+  const composed = compose(pending.question, { language, state })
+  return {
+    covered: false,
+    status: COVERAGE.NEEDS_CLARIFICATION,
+    reason: `pending-question:${pending.field}`,
+    spokenText: composed.text,
+    sourceIds: pending.sources ?? [],
+    stateUpdate: pendingContextUpdate(pending),
+    source: null,
+    pendingQuestion: pending,
+  }
+}
 
-export function decideGroundedReply({ text, idioma, state, searchResults, interpretation }) {
-  const evidence = searchResults.filter(({ score }) => score > 0);
-  const legacy = detectIntent(text);
-  const understood = interpretation ?? (legacy ? { intent: LEGACY_NAMES[legacy.name], confidence: 1 } : interpretTransmission(text, { idioma, state }));
-  if (understood.intent === 'unknown' || understood.intent === 'ambiguous') {
-    return outcome('not_understood', idioma === 'en' ? 'I did not understand your operational request. Say your intentions.' : 'Não entendi sua solicitação operacional. Informe suas intenções.', 'intent-not-understood');
+function unfilledReply({ status, reason, language, coverage }) {
+  const messages = {
+    'controller-frequency-not-configured': language === 'en' ? 'Transfer frequency is not configured for this scenario; remain on this frequency.' : 'A frequência de transferência não está configurada para este cenário; mantenha esta frequência.',
+    'readback-without-clearance': language === 'en' ? 'There is no clearance pending readback in this session.' : 'Não há autorização pendente de cotejamento nesta sessão.',
+    'missing-session-context': coverage.message?.[language] ?? coverage.message?.pt ?? 'Dado de sessão indisponível.',
+    'external-source-not-integrated': language === 'en'
+      ? 'That information depends on an external source (METAR or weather service) that is not integrated yet; I will not improvise the data.'
+      : 'Essa informação depende de fonte externa (METAR ou serviço meteorológico) que ainda não está integrada; não vou improvisar o dado.',
+    'family-not-implemented': language === 'en'
+      ? 'This situation is not implemented in the simulator yet; I will not improvise a procedure.'
+      : 'Esta situação ainda não está implementada no simulador; não vou improvisar procedimento.',
+    'no-evidence-rule': language === 'en'
+      ? 'This situation is not implemented in the simulator yet; I will not improvise a procedure.'
+      : 'Esta situação ainda não está implementada no simulador; não vou improvisar procedimento.',
+    'evidence-not-recovered': language === 'en'
+      ? 'There is not enough recovered documentary basis to answer that safely.'
+      : 'Não há base documental recuperada suficiente para responder isso com segurança.',
   }
-  if (understood.intent === 'frequency_change' && understood.frequencyRequestType === 'assignment_request') {
-    return outcome('operational_context_missing', idioma === 'en' ? 'Transfer frequency is not configured for this scenario; remain on this frequency.' : 'A frequência de transferência não está configurada para este cenário; mantenha esta frequência.', 'controller-frequency-not-configured');
+  return {
+    covered: false,
+    status,
+    reason,
+    spokenText: coverage.message?.[language] ?? coverage.message?.pt ?? messages[reason] ?? messages['evidence-not-recovered'],
+    sourceIds: [],
+    stateUpdate: null,
+    source: null,
   }
-  const missing = missingInformation(understood, state);
-  if (missing.length) {
-    const fields = missing.join(', ');
-    return outcome('needs_clarification', idioma === 'en' ? `Confirm ${fields}.` : `Confirme ${fields}.`, `missing:${fields}`);
+}
+
+export function decideGroundedReply({ text, idioma, state, searchResults, interpretation, plan: suppliedPlan }) {
+  const language = idioma === 'en' || idioma === 'en-US' ? 'en' : 'pt'
+  const evidence = (searchResults ?? []).filter(({ score }) => score > 0)
+  const legacy = detectIntent(text)
+  const understood = interpretation ?? (legacy ? { intent: LEGACY_NAMES[legacy.name], confidence: 1 } : interpretTransmission(text, { idioma, state }))
+
+  const dialogue = evaluateDialogue({ interpretation: understood, state, text })
+  // O contexto resolve a ambiguidade do léxico: se há autorização a cotejar e a fala traz
+  // marcador documentado de cotejamento, a comunicação é um cotejamento (A3.16).
+  const effective = dialogue.act === DIALOGUE_ACT.READBACK && understood.intent !== 'readback'
+    ? { ...understood, intent: 'readback', readback: true }
+    : understood
+  const plan = suppliedPlan && suppliedPlan.intent === effective.intent ? suppliedPlan : formulateSearch(effective, state)
+  const withDialogue = (reply) => ({ ...reply, interpretation: effective, dialogueAct: dialogue.act, plan })
+
+  if (dialogue.act === DIALOGUE_ACT.UNRELATED && dialogue.pending) {
+    return withDialogue(pendingQuestionReply({ language, pending: dialogue.pending, state }))
   }
-  const expectedSource = SOURCE_BY_INTENT[understood.intent];
-  const source = evidence.find(({ id }) => id === expectedSource);
-  if (!source) {
-    return outcome('unsupported', idioma === 'en' ? 'No documentary coverage for that request.' : 'Não há cobertura documental para essa solicitação.', 'relevant-evidence-not-retrieved');
+
+  const coverage = resolveCoverage({ interpretation: effective, state, evidence, plan })
+
+  if (coverage.status === COVERAGE.NOT_UNDERSTOOD) {
+    return withDialogue({
+      covered: false, status: COVERAGE.NOT_UNDERSTOOD, reason: 'intent-not-understood',
+      spokenText: language === 'en' ? 'I did not understand your operational request. Say your intentions.' : 'Não entendi sua solicitação operacional. Informe suas intenções.',
+      sourceIds: [], stateUpdate: null, source: null, coverage,
+    })
   }
-  if (understood.intent === 'readback') {
-    const assessment = evaluateReadbackSemantic({ autorizacao: state.contexto.ultima_autorizacao, cotejamento: text })
+
+  if (coverage.status !== COVERAGE.DEMONSTRATED) {
+    if (coverage.status === COVERAGE.NEEDS_CLARIFICATION) {
+      return withDialogue({
+        ...missingInformationReply({ language, requirement: coverage.requirement, state, intent: effective.intent }),
+        coverage,
+      })
+    }
+    return withDialogue({ ...unfilledReply({ status: coverage.status, reason: coverage.reason, language, coverage }), coverage })
+  }
+
+  // Cotejamento: avaliação segue a de F2 (arts. 12 § 1º e § 2º e art. 45). Aqui apenas roteia.
+  if (effective.intent === 'readback') {
+    const assessment = evaluateReadbackSemantic({ autorizacao: state?.contexto?.ultima_autorizacao, cotejamento: text })
     if (!assessment.correct) {
-      const details = [...assessment.missing, ...assessment.contradictory].join(', ')
-      const spokenText = idioma === 'en' ? `Readback ${assessment.classification}; confirm ${details || 'the clearance'}.` : `Cotejamento ${assessment.classification === 'contradictory' ? 'divergente' : 'incompleto'}; confirme ${details || 'a autorização'}.`
-      return { covered: true, status: 'needs_clarification', reason: `readback:${assessment.classification}`, spokenText, sourceIds: [source.id], stateUpdate: null, source, interpretation: understood, readbackAssessment: assessment }
+      // Art. 12, § 1º: cotejamento incorreto → "negativo" seguido da versão correta. O estado NÃO
+      // é atualizado: a obrigação de cotejar a autorização original continua pendente até que
+      // ela seja repetida corretamente.
+      const items = [...assessment.missing, ...assessment.contradictory].map((key) => ({ key, value: assessment.expected[key] }))
+      const corrected = compose('readback_incorrect', { language, state, sourceId: coverage.sources[0], items })
+      return withDialogue({
+        covered: true, status: COVERAGE.NEEDS_CLARIFICATION, reason: `readback:${assessment.classification}`,
+        spokenText: corrected.text, sourceIds: coverage.sources, stateUpdate: null, source: null,
+        coverage, readbackAssessment: assessment, elements: corrected.elements,
+      })
     }
   }
-  const callSign = state.aeronave.indicativo;
-  const runway = state.cenario.pista_em_uso;
-  const qnh = state.cenario.qnh;
-  const replies = idioma === 'en' ? {
-    taxi_request: `${callSign}, taxi to holding point runway ${runway}, QNH ${qnh}.`,
-    takeoff_request: `${callSign}, runway ${runway}, cleared for take-off.`,
-    traffic_circuit: `${callSign}, cleared to join the traffic pattern runway ${runway}, QNH ${qnh}.`,
-    approach_request: `${callSign}, cleared approach runway ${runway}.`,
-    landing_request: `${callSign}, runway ${runway}, cleared to land.`,
-    emergency: `${callSign}, roger Mayday, runway ${runway} available, report position.`,
-    frequency_change: `${callSign}, frequency change approved.`,
-    vfr_departure: `${callSign}, VFR departure toward ${understood.destination}, runway ${runway}, QNH ${qnh}.`,
-    readback: `${callSign}, readback correct.`,
-  } : {
-    taxi_request: `${callSign}, autorizado táxi para o ponto de espera da pista ${runway}, QNH ${qnh}.`,
-    takeoff_request: `${callSign}, pista ${runway}, decolagem autorizada.`,
-    traffic_circuit: `${callSign}, autorizado ingresso no circuito de tráfego da pista ${runway}, QNH ${qnh}.`,
-    approach_request: `${callSign}, autorizado aproximação pista ${runway}.`,
-    landing_request: `${callSign}, pista ${runway}, pouso autorizado.`,
-    emergency: `${callSign}, ciente Mayday, pista ${runway} disponível, reporte posição.`,
-    frequency_change: `${callSign}, mudança de frequência aprovada.`,
-    vfr_departure: `${callSign}, saída VFR para ${understood.destination}, pista ${runway}, QNH ${qnh}.`,
-    readback: `${callSign}, cotejamento correto.`,
-  };
-  const updates = {
-    taxi_request: contextUpdate(understood),
-    takeoff_request: state.fase === 'solo' ? { fase: 'decolagem', frequencia: 'torre', contexto: contextUpdate(understood).contexto } : contextUpdate(understood),
-    traffic_circuit: ['decolagem', 'rota'].includes(state.fase) ? { fase: 'aproximacao', frequencia: 'torre', contexto: contextUpdate(understood).contexto } : contextUpdate(understood),
-    approach_request: ['decolagem', 'rota'].includes(state.fase) ? { fase: 'aproximacao', frequencia: 'aproximacao', contexto: contextUpdate(understood).contexto } : contextUpdate(understood),
-    landing_request: state.fase === 'aproximacao' ? { fase: 'pouso', frequencia: 'torre', contexto: contextUpdate(understood).contexto } : contextUpdate(understood),
-    emergency: contextUpdate(understood),
-    frequency_change: contextUpdate(understood),
-    vfr_departure: contextUpdate(understood),
-    readback: contextUpdate(understood),
-  };
-  const stateUpdate = updates[understood.intent];
-  stateUpdate.contexto = { ...(stateUpdate.contexto ?? {}), ultima_autorizacao: replies[understood.intent], ultima_instrucao_controlador: replies[understood.intent], ultima_intencao: understood.intent, cotejamento_pendente: understood.intent !== 'readback', emergencia_ativa: understood.intent === 'emergency' || state.contexto?.emergencia_ativa === true };
-  return { covered: true, status: 'documented', reason: 'grounded', spokenText: replies[understood.intent], sourceIds: [source.id], stateUpdate, source, interpretation: understood };
-}
 
-function missingInformation(interpretation, state) {
-  const missing = [];
-  if (interpretation.intent === 'vfr_departure' && !interpretation.destination && !state.contexto?.destino) missing.push(interpretation.language === 'en' ? 'destination or sector' : 'destino ou setor')
-  if (interpretation.intent === 'readback' && !state.contexto?.ultima_autorizacao) missing.push(interpretation.language === 'en' ? 'clearance being read back' : 'autorização cotejada')
-  return missing
+  const composed = compose(coverage.variant.realization, {
+    language, state, sourceId: coverage.sources[0],
+    destination: effective.destination ?? state?.contexto?.destino,
+  })
+  const spokenText = composed.text
+  const stateUpdate = buildStateUpdate({ effective, state, spokenText })
+  return withDialogue({
+    covered: true, status: COVERAGE.DEMONSTRATED, reason: 'grounded',
+    spokenText, sourceIds: coverage.sources,
+    source: evidence.find(({ id }) => id === coverage.sources[0]) ?? evidence[0] ?? null,
+    stateUpdate, coverage, elements: composed.elements,
+  })
 }
 
 function contextUpdate(interpretation) {
@@ -117,6 +187,35 @@ function contextUpdate(interpretation) {
   return update
 }
 
-function outcome(status, spokenText, reason) {
-  return { covered: false, status, reason, spokenText, sourceIds: [], stateUpdate: null, source: null }
+/**
+ * Atualização de estado validada. A tabela de transições de fase/frequência é preservada como
+ * estava (F2 revisa as transições sem documentação, ver A3.17). O que F1 acrescenta é o ciclo de
+ * vida da pergunta pendente: ela é encerrada sempre que a comunicação foi tratada.
+ */
+function buildStateUpdate({ effective, state, spokenText }) {
+  const context = contextUpdate(effective)
+  const transitions = {
+    taxi_request: context,
+    takeoff_request: state.fase === 'solo' ? { fase: 'decolagem', frequencia: 'torre', contexto: context.contexto } : context,
+    traffic_circuit: ['decolagem', 'rota'].includes(state.fase) ? { fase: 'aproximacao', frequencia: 'torre', contexto: context.contexto } : context,
+    approach_request: ['decolagem', 'rota'].includes(state.fase) ? { fase: 'aproximacao', frequencia: 'aproximacao', contexto: context.contexto } : context,
+    landing_request: state.fase === 'aproximacao' ? { fase: 'pouso', frequencia: 'torre', contexto: context.contexto } : context,
+    emergency: context,
+    frequency_change: context,
+    vfr_departure: context,
+    readback: context,
+    position_report: context,
+    unable: context,
+  }
+  const update = transitions[effective.intent] ?? context
+  update.contexto = {
+    ...(update.contexto ?? {}),
+    ultima_autorizacao: spokenText,
+    ultima_instrucao_controlador: spokenText,
+    ultima_intencao: effective.intent,
+    cotejamento_pendente: effective.intent !== 'readback',
+    emergencia_ativa: effective.intent === 'emergency' || state.contexto?.emergencia_ativa === true,
+    ...pendingContextUpdate(null).contexto,
+  }
+  return update
 }

@@ -91,7 +91,7 @@ test('a passagem pela língua original não fabrica cobertura inexistente', () =
   const unsupported = processTransmission({ text: 'request detailed weather report', idioma: 'en', state: stateFor('vfr_local_en'), search })
 
   assert.equal(unsupported.interpretation.intent, 'weather_request')
-  assert.equal(unsupported.decision.status, 'unsupported')
+  assert.equal(unsupported.decision.status, 'external_source_unavailable')
   assert.deepEqual(unsupported.decision.sourceIds, [])
   assert.equal(unsupported.retrieval.diagnostics.originalLanguageFallback, false)
   assert.deepEqual(unsupported.retrieval.diagnostics.fallbackSourceIds, [])
