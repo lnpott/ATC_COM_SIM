@@ -1,0 +1,1699 @@
+{
+  "versao": "v1",
+  "geradoPor": "scripts/update-dialogue-baseline.mjs",
+  "aviso": "SNAPSHOT NAO-NORMATIVO do comportamento atual (F0). Descreve o que a implementacao FAZ hoje, nao o que ela DEVE fazer. Alteracoes so devem ocorrer de forma deliberada, com a diferenca classificada como pretendida (e encaminhada ao F3, reference/dialogue-regression-matrix.json) ou como regressao (corrigida).",
+  "roteiros": [
+    {
+      "id": "pt_vfr_local_ciclo_completo",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "Solo Galeão, Papa Tango Alfa Bravo, posição pátio, solicito instruções de táxi",
+          "normalizado": "Solo Galeão, PTAB posição pátio, solicito instruções de táxi",
+          "intent": "taxi_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0125-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "taxi_request",
+            "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 149
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Ciente pista 18, QNH 1015",
+          "normalizado": "Ciente pista 18, QNH 1015",
+          "intent": "readback",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, cotejamento correto.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "readback",
+            "ultima_autorizacao": "PT-ABC, cotejamento correto.",
+            "ultima_instrucao_controlador": "PT-ABC, cotejamento correto.",
+            "cotejamento_pendente": false,
+            "emergencia_ativa": false
+          },
+          "historico": 4,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 603
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "Torre, PT-ABC pronto para partida",
+          "normalizado": "Torre, PT-ABC pronto para partida",
+          "intent": "takeoff_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, pista 18, decolagem autorizada.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0126-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "takeoff_request",
+            "ultima_autorizacao": "PT-ABC, pista 18, decolagem autorizada.",
+            "ultima_instrucao_controlador": "PT-ABC, pista 18, decolagem autorizada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 6,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 442
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Ciente pista 18, decolagem autorizada",
+          "normalizado": "Ciente pista 18, decolagem autorizada",
+          "intent": "readback",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, cotejamento correto.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "pista"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "readback",
+            "ultima_autorizacao": "PT-ABC, cotejamento correto.",
+            "ultima_instrucao_controlador": "PT-ABC, cotejamento correto.",
+            "cotejamento_pendente": false,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 8,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 528
+          }
+        },
+        {
+          "turno": 5,
+          "piloto": "Torre, PT-ABC cinco milhas ao sul, solicito ingresso no circuito",
+          "normalizado": "Torre, PT-ABC cinco milhas ao sul, solicito ingresso no circuito",
+          "intent": "traffic_circuit",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0129-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "aproximacao",
+          "frequencia": "torre",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "traffic_circuit",
+            "ultima_autorizacao": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 10,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 493
+          }
+        },
+        {
+          "turno": 6,
+          "piloto": "Ciente, ingresso no circuito pista 18",
+          "normalizado": "Ciente, ingresso no circuito pista 18",
+          "intent": "ambiguous",
+          "confidence": 0.49,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "qnh"
+            ],
+            "score": 50
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "aproximacao",
+          "frequencia": "torre",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "traffic_circuit",
+            "ultima_autorizacao": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 11,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 663
+          }
+        },
+        {
+          "turno": 7,
+          "piloto": "Controle, PT-ABC solicito aproximação ILS",
+          "normalizado": "Controle, PT-ABC solicito aproximação ILS",
+          "intent": "approach_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, autorizado aproximação pista 18.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0114-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "pista",
+              "qnh"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "aproximacao",
+          "frequencia": "torre",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "approach_request",
+            "ultima_autorizacao": "PT-ABC, autorizado aproximação pista 18.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado aproximação pista 18.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 13,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 636
+          }
+        },
+        {
+          "turno": 8,
+          "piloto": "Torre, PT-ABC na final, solicito pouso",
+          "normalizado": "Torre, PT-ABC na final, solicito pouso",
+          "intent": "landing_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, pista 18, pouso autorizado.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0132-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista"
+            ],
+            "omitidos": [
+              "pista"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "pouso",
+          "frequencia": "torre",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "landing_request",
+            "ultima_autorizacao": "PT-ABC, pista 18, pouso autorizado.",
+            "ultima_instrucao_controlador": "PT-ABC, pista 18, pouso autorizado.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 15,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 542
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 15,
+        "avaliacoes": 7,
+        "score": 64,
+        "erros_recorrentes": {
+          "qnh": 2,
+          "pista": 2
+        }
+      }
+    },
+    {
+      "id": "en_vfr_local_ciclo_completo",
+      "cenario": "vfr_local_en",
+      "idioma": "en",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "Galeao Ground, Papa Tango Alpha Bravo, stand two, request taxi instructions",
+          "normalizado": "Galeao Ground, PTAB stand two, request taxi instructions",
+          "intent": "taxi_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0125-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "ground",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "taxi_request",
+            "ultima_autorizacao": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 153
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Roger runway one eight, altimeter 1015",
+          "normalizado": "Roger runway 18, altimeter 1015",
+          "intent": "readback",
+          "confidence": 1,
+          "status": "unsupported",
+          "reason": "relevant-evidence-not-retrieved",
+          "covered": false,
+          "spokenText": "No documentary coverage for that request.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "ground",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "taxi_request",
+            "ultima_autorizacao": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 3,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 544
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "Tower, PT-ABC ready for departure",
+          "normalizado": "Tower, PT-ABC ready for departure",
+          "intent": "takeoff_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, runway 18, cleared for take-off.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0126-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "pista",
+              "qnh"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "takeoff_request",
+            "ultima_autorizacao": "PT-ABC, runway 18, cleared for take-off.",
+            "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared for take-off.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 5,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 519
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Roger runway one eight, cleared for take-off",
+          "normalizado": "Roger runway 18, cleared for take-off",
+          "intent": "readback",
+          "confidence": 1,
+          "status": "unsupported",
+          "reason": "relevant-evidence-not-retrieved",
+          "covered": false,
+          "spokenText": "No documentary coverage for that request.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "pista"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "takeoff_request",
+            "ultima_autorizacao": "PT-ABC, runway 18, cleared for take-off.",
+            "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared for take-off.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 6,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 497
+          }
+        },
+        {
+          "turno": 5,
+          "piloto": "Tower, PT-ABC five miles south, request to join traffic pattern",
+          "normalizado": "Tower, PT-ABC five miles south, request to join traffic pattern",
+          "intent": "traffic_circuit",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, cleared to join the traffic pattern runway 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0129-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista"
+            ],
+            "omitidos": [
+              "pista"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "aproximacao",
+          "frequencia": "torre",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "traffic_circuit",
+            "ultima_autorizacao": "PT-ABC, cleared to join the traffic pattern runway 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, cleared to join the traffic pattern runway 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "join"
+          },
+          "historico": 8,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 501
+          }
+        },
+        {
+          "turno": 6,
+          "piloto": "Approach, PT-ABC request ILS approach",
+          "normalizado": "Approach, PT-ABC request ILS approach",
+          "intent": "approach_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, cleared approach runway 18.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0114-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "pista",
+              "qnh"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "aproximacao",
+          "frequencia": "torre",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "approach_request",
+            "ultima_autorizacao": "PT-ABC, cleared approach runway 18.",
+            "ultima_instrucao_controlador": "PT-ABC, cleared approach runway 18.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "join"
+          },
+          "historico": 10,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 630
+          }
+        },
+        {
+          "turno": 7,
+          "piloto": "Tower, PT-ABC final, request landing",
+          "normalizado": "Tower, PT-ABC final, request landing",
+          "intent": "landing_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, runway 18, cleared to land.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0132-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "proa"
+            ],
+            "omitidos": [
+              "pista",
+              "proa"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "pouso",
+          "frequencia": "torre",
+          "posicao": "two",
+          "contexto": {
+            "ultima_intencao": "landing_request",
+            "ultima_autorizacao": "PT-ABC, runway 18, cleared to land.",
+            "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared to land.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "join"
+          },
+          "historico": 12,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 518
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 12,
+        "avaliacoes": 6,
+        "score": 33,
+        "erros_recorrentes": {
+          "pista": 4,
+          "qnh": 2,
+          "proa": 1
+        }
+      }
+    },
+    {
+      "id": "pt_ifr_partida_emergencia_com_fogo",
+      "cenario": "ifr_partida_pt",
+      "idioma": "pt",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "Solo Guarulhos, PR-IFR, posição gate, solicito instruções de táxi",
+          "normalizado": "Solo Guarulhos, PR-IFR, posição gate, solicito instruções de táxi",
+          "intent": "taxi_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0125-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "taxi_request",
+            "ultima_autorizacao": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
+            "ultima_instrucao_controlador": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 148
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Ciente pista 10, QNH 1013",
+          "normalizado": "Ciente pista 10, QNH 1013",
+          "intent": "readback",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, cotejamento correto.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "readback",
+            "ultima_autorizacao": "PR-IFR, cotejamento correto.",
+            "ultima_instrucao_controlador": "PR-IFR, cotejamento correto.",
+            "cotejamento_pendente": false,
+            "emergencia_ativa": false
+          },
+          "historico": 4,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 627
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "Torre, PR-IFR pronto para partida",
+          "normalizado": "Torre, PR-IFR pronto para partida",
+          "intent": "takeoff_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, pista 10, decolagem autorizada.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0126-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "takeoff_request",
+            "ultima_autorizacao": "PR-IFR, pista 10, decolagem autorizada.",
+            "ultima_instrucao_controlador": "PR-IFR, pista 10, decolagem autorizada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "partida"
+          },
+          "historico": 6,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 461
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Mayday, Mayday, Mayday, PR-IFR, falha de motor",
+          "normalizado": "Mayday, Mayday, Mayday, PR-IFR, falha de motor",
+          "intent": "emergency",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0064-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista"
+            ],
+            "omitidos": [
+              "pista"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "emergency",
+            "ultima_autorizacao": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true,
+            "destino": "partida"
+          },
+          "historico": 8,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 547
+          }
+        },
+        {
+          "turno": 5,
+          "piloto": "Estamos com fogo aqui.",
+          "normalizado": "Estamos com fogo aqui.",
+          "intent": "unknown",
+          "confidence": 0,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "nível"
+            ],
+            "omitidos": [
+              "pista",
+              "nível"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "emergency",
+            "ultima_autorizacao": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true,
+            "destino": "partida"
+          },
+          "historico": 9,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 616
+          }
+        },
+        {
+          "turno": 6,
+          "piloto": "Fogo no motor direito.",
+          "normalizado": "Fogo no motor direito.",
+          "intent": "unknown",
+          "confidence": 0,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "nível"
+            ],
+            "omitidos": [
+              "pista",
+              "nível"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "emergency",
+            "ultima_autorizacao": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true,
+            "destino": "partida"
+          },
+          "historico": 10,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 592
+          }
+        },
+        {
+          "turno": 7,
+          "piloto": "PR-IFR na final, solicito pouso",
+          "normalizado": "PR-IFR na final, solicito pouso",
+          "intent": "landing_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, pista 10, pouso autorizado.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0132-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "nível"
+            ],
+            "omitidos": [
+              "pista",
+              "nível"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "decolagem",
+          "frequencia": "torre",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "landing_request",
+            "ultima_autorizacao": "PR-IFR, pista 10, pouso autorizado.",
+            "ultima_instrucao_controlador": "PR-IFR, pista 10, pouso autorizado.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true,
+            "destino": "partida"
+          },
+          "historico": 12,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 556
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 12,
+        "avaliacoes": 6,
+        "score": 33,
+        "erros_recorrentes": {
+          "pista": 4,
+          "nível": 3
+        }
+      }
+    },
+    {
+      "id": "pt_vfr_destino_faltante_esclarecimento_e_fora_de_contexto",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "PT-ABC pretende saída VFR",
+          "normalizado": "PT-ABC pretende saída VFR",
+          "intent": "vfr_departure",
+          "confidence": 1,
+          "status": "needs_clarification",
+          "reason": "missing:destino ou setor",
+          "covered": false,
+          "spokenText": "Confirme destino ou setor.",
+          "sourceIds": [],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {},
+          "historico": 1,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 149
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Uma cerveja e um cigarro.",
+          "normalizado": "Uma cerveja e um cigarro.",
+          "intent": "unknown",
+          "confidence": 0,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {},
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 1,
+            "caracteres": 203
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "VFR saída para o setor norte",
+          "normalizado": "VFR saída para o setor norte",
+          "intent": "vfr_departure",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0122-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "regras_voo": "VFR",
+            "destino": "norte",
+            "ultima_intencao": "vfr_departure",
+            "ultima_autorizacao": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 4,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 258
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Ciente saída VFR setor norte",
+          "normalizado": "Ciente saída VFR setor norte",
+          "intent": "vfr_departure",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0122-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "pista",
+              "qnh"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "regras_voo": "VFR",
+            "destino": "norte",
+            "ultima_intencao": "vfr_departure",
+            "ultima_autorizacao": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 6,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 562
+          }
+        },
+        {
+          "turno": 5,
+          "piloto": "Solicito táxi e pouso",
+          "normalizado": "Solicito táxi e pouso",
+          "intent": "ambiguous",
+          "confidence": 0.49,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "pista",
+              "qnh"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "regras_voo": "VFR",
+            "destino": "norte",
+            "ultima_intencao": "vfr_departure",
+            "ultima_autorizacao": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 7,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 562
+          }
+        },
+        {
+          "turno": 6,
+          "piloto": "Solo, PT-ABC, solicito instruções de táxi",
+          "normalizado": "Solo, PT-ABC, solicito instruções de táxi",
+          "intent": "taxi_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0125-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "qnh"
+            ],
+            "omitidos": [
+              "pista",
+              "qnh"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "regras_voo": "VFR",
+            "destino": "norte",
+            "ultima_intencao": "taxi_request",
+            "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 9,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 555
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 9,
+        "avaliacoes": 3,
+        "score": 0,
+        "erros_recorrentes": {
+          "pista": 3,
+          "qnh": 3
+        }
+      }
+    },
+    {
+      "id": "pt_frequencia_aprovacao_e_assignment",
+      "cenario": "ifr_partida_pt",
+      "idioma": "pt",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "Controle Brasília, PR-IFR, solicito mudança de frequência",
+          "normalizado": "Controle Brasília, PR-IFR, solicito mudança de frequência",
+          "intent": "frequency_change",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, mudança de frequência aprovada.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0059-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "frequency_change",
+            "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
+            "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 148
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Ciente, mudança de frequência aprovada",
+          "normalizado": "Ciente, mudança de frequência aprovada",
+          "intent": "frequency_change",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, mudança de frequência aprovada.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0059-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "frequência"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "frequency_change",
+            "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
+            "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 4,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 533
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "Solicito a frequência de transferência",
+          "normalizado": "Solicito a frequência de transferência",
+          "intent": "frequency_change",
+          "confidence": 1,
+          "status": "operational_context_missing",
+          "reason": "controller-frequency-not-configured",
+          "covered": false,
+          "spokenText": "A frequência de transferência não está configurada para este cenário; mantenha esta frequência.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "frequência"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "frequency_change",
+            "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
+            "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 5,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 514
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Controle Brasília, PR-IFR, solicito troca para frequência 123,45",
+          "normalizado": "Controle Brasília, PR-IFR, solicito troca para frequência 123,45",
+          "intent": "frequency_change",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, mudança de frequência aprovada.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0059-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "frequência"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "frequency_change",
+            "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
+            "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "frequência"
+          },
+          "historico": 7,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 514
+          }
+        },
+        {
+          "turno": 5,
+          "piloto": "Ciente, frequência 123,45",
+          "normalizado": "Ciente, frequência 123,45",
+          "intent": "ambiguous",
+          "confidence": 0.49,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "frequência"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "gate",
+          "contexto": {
+            "regras_voo": "IFR",
+            "ultima_intencao": "frequency_change",
+            "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
+            "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false,
+            "destino": "frequência"
+          },
+          "historico": 8,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 575
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 8,
+        "avaliacoes": 4,
+        "score": 100,
+        "erros_recorrentes": {}
+      }
+    },
+    {
+      "id": "pt_sem_cobertura_e_dado_externo",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "Solicito meteorologia detalhada",
+          "normalizado": "Solicito meteorologia detalhada",
+          "intent": "weather_request",
+          "confidence": 1,
+          "status": "unsupported",
+          "reason": "relevant-evidence-not-retrieved",
+          "covered": false,
+          "spokenText": "Não há cobertura documental para essa solicitação.",
+          "sourceIds": [],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {},
+          "historico": 1,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 149
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Qual o tempo em Recife?",
+          "normalizado": "Qual o tempo em Recife?",
+          "intent": "unknown",
+          "confidence": 0,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {},
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 1,
+            "caracteres": 209
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "Xenobiologia quântica marciana",
+          "normalizado": "Xenobiologia quântica marciana",
+          "intent": "unknown",
+          "confidence": 0,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {},
+          "historico": 3,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 262
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Solo, PT-ABC posição pátio, solicito instruções de táxi",
+          "normalizado": "Solo, PT-ABC posição pátio, solicito instruções de táxi",
+          "intent": "taxi_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0125-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "solo",
+          "frequencia": "solo",
+          "posicao": "pátio",
+          "contexto": {
+            "ultima_intencao": "taxi_request",
+            "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 5,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 261
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 5,
+        "avaliacoes": 0,
+        "score": 100,
+        "erros_recorrentes": {}
+      }
+    },
+    {
+      "id": "pt_emergencia_motor_em_rota",
+      "cenario": "emergencia_motor_pt",
+      "idioma": "pt",
+      "turnos": [
+        {
+          "turno": 1,
+          "piloto": "Controle, PT-EMG, vinte milhas ao sul, solicito pouso",
+          "normalizado": "Controle, PT-EMG, vinte milhas ao sul, solicito pouso",
+          "intent": "landing_request",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-EMG, pista 15, pouso autorizado.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0132-001"
+          ],
+          "cotejamentoLegado": null,
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "rota",
+          "frequencia": "controle",
+          "posicao": "20 NM sul",
+          "contexto": {
+            "ultima_intencao": "landing_request",
+            "ultima_autorizacao": "PT-EMG, pista 15, pouso autorizado.",
+            "ultima_instrucao_controlador": "PT-EMG, pista 15, pouso autorizado.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": false
+          },
+          "historico": 2,
+          "sessaoContexto": {
+            "recentes": 0,
+            "caracteres": 161
+          }
+        },
+        {
+          "turno": 2,
+          "piloto": "Mayday, PT-EMG, falha de motor",
+          "normalizado": "Mayday, PT-EMG, falha de motor",
+          "intent": "emergency",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0064-001"
+          ],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista"
+            ],
+            "omitidos": [
+              "pista"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": true,
+          "erroAplicacaoEstado": null,
+          "fase": "rota",
+          "frequencia": "controle",
+          "posicao": "20 NM sul",
+          "contexto": {
+            "ultima_intencao": "emergency",
+            "ultima_autorizacao": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true
+          },
+          "historico": 4,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 509
+          }
+        },
+        {
+          "turno": 3,
+          "piloto": "Ciente Mayday, pista 15 disponível, reporte posição",
+          "normalizado": "Ciente Mayday, pista 15 disponível, reporte posição",
+          "intent": "ambiguous",
+          "confidence": 0.49,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": true,
+            "itens_esperados": [
+              "pista",
+              "nível"
+            ],
+            "omitidos": [],
+            "score": 100
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "rota",
+          "frequencia": "controle",
+          "posicao": "20 NM sul",
+          "contexto": {
+            "ultima_intencao": "emergency",
+            "ultima_autorizacao": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true
+          },
+          "historico": 5,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 554
+          }
+        },
+        {
+          "turno": 4,
+          "piloto": "Fogo no motor direito.",
+          "normalizado": "Fogo no motor direito.",
+          "intent": "unknown",
+          "confidence": 0,
+          "status": "not_understood",
+          "reason": "intent-not-understood",
+          "covered": false,
+          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "sourceIds": [],
+          "cotejamentoLegado": {
+            "correto": false,
+            "itens_esperados": [
+              "pista",
+              "nível"
+            ],
+            "omitidos": [
+              "pista",
+              "nível"
+            ],
+            "score": 0
+          },
+          "cotejamentoSemantico": null,
+          "estadoAplicado": false,
+          "erroAplicacaoEstado": null,
+          "fase": "rota",
+          "frequencia": "controle",
+          "posicao": "20 NM sul",
+          "contexto": {
+            "ultima_intencao": "emergency",
+            "ultima_autorizacao": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "cotejamento_pendente": true,
+            "emergencia_ativa": true
+          },
+          "historico": 6,
+          "sessaoContexto": {
+            "recentes": 2,
+            "caracteres": 575
+          }
+        }
+      ],
+      "relatorio": {
+        "transmissoes": 6,
+        "avaliacoes": 3,
+        "score": 33,
+        "erros_recorrentes": {
+          "pista": 2,
+          "nível": 1
+        }
+      }
+    }
+  ]
+}

@@ -9,6 +9,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "build:index": "node scripts/build-index.mjs",
     "check:index": "node scripts/build-index.mjs --check",
+    "update:dialogue-baseline": "node scripts/update-dialogue-baseline.mjs",
+    "test:dialogue-baseline": "node --test test/dialogue-baseline.test.js",
     "audit:corpus": "node scripts/audit-corpus.mjs",
     "test": "node --test test/*.test.js",
     "test:llm": "node --test test-llm/*.test.js",

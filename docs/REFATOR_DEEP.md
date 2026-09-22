@@ -92,6 +92,17 @@ Executados sobre o corpus e o pipeline versionados nesta revisão:
 | A3.12 | **Orçamento de contexto é fixo e cego** | `limitedSessionContext` corta em 2 transmissões/2.000 chars iguais para qualquer modelo. Não há estimativa de tokens, reserva para a resposta, nem escolha de candidato por tamanho. |
 | A3.13 | **Duas arquiteturas oficiais de fato** | `voice.html` + `src/App.jsx` → `/api/generate-reply` → `server/providers.js` (prompt genérico, sem RAG, sem estado, "não emita autorização real"). `vite.config.js` compila as duas entradas; README publica as duas; `index.html` linka "VOICE LAB". |
 
+Achados **A3.14 a A3.17** foram revelados pelo harness de caracterização criado no F0
+(`reference/dialogue-baseline.v1.json`, 7 roteiros / 41 turnos). Eles não eram conhecidos na
+análise inicial — o que confirma que a rede multi-turno era necessária antes de tocar F1/F2.
+
+| # | Achado | Evidência |
+|---|---|---|
+| A3.14 | **Cotejamento não tem fonte citável em inglês** | `MCA-100-16-artigo-0012-001` (art. 12, a provisão de cotejamento) tem `idioma: pt`. Dos 374 chunks, só 119 são alcançáveis em inglês (100 `pt-en` + 19 `en`) e nenhum deles trata de cotejamento. Resultado no roteiro EN: os dois turnos de cotejamento voltam `unsupported` — o mesmo ato operacional é documentado em PT e "sem cobertura" em EN. Não é ausência real de cobertura: é lacuna bilíngue do corpus/índice. |
+| A3.15 | **Cotejamento vira "solicitação nova"** | "Ciente, mudança de frequência aprovada" → `frequency_change` / `documented` (o controlador **reautoriza**) em vez de cotejamento; "Ciente saída VFR setor norte" → `vfr_departure` / `documented`. O parser determinístico pontua a solicitação nova igual ou acima do cotejamento, então a separação intenção/autorização do §12 é violada **antes** de o avaliador de cotejamento rodar. |
+| A3.16 | **Ambiguidade criada pelo próprio pipeline** | Contém "mayday" → `scoreIntent` força `emergency` a 0.98, então "Ciente Mayday, pista 15 disponível" vira `ambiguous` → `not_understood`; "Ciente, ingresso no circuito pista 18" (cotejamento aguardado após autorização de circuito) empata com `traffic_circuit` → `ambiguous`. São exatamente os casos em que §4/§5 esperam que o **contexto** resolva a ambiguidade — hoje há contexto disponível e ele não é usado. |
+| A3.17 | **Autorização emitida sem transição de estado válida** | No roteiro `pt_ifr_partida_emergencia_com_fogo`, um pedido de pouso é respondido `documented` com `fase=decolagem` e a fase **não** muda (`updates.landing_request` só transiciona a partir de `aproximacao`). O controlador autoriza pouso sem o estado acompanhar — falha do §11 (estado validado como fonte da verdade). |
+
 ### A.4 O que existe no `App.jsx` com valor a preservar (§17)
 
 O PLANO_REF proíbe apagar a implementação paralela antes de extrair o que tem valor. Inventário:
@@ -184,10 +195,13 @@ critério de conclusão.
   nos 9 caminhos atuais ao longo de sequências de vários turnos.
 - **Componentes envolvidos.** `pipeline.js`, `controller.js`, `state-machine.js`, `retrieval.js`,
   `training.js`, `scenarios.js`, `search.js`, `App.jsx`, `web/app.js`, corpus e índice.
-- **Arquivos/módulos afetados (prováveis).** novo `reference/dialogue-inventory.v1.json` (roteiros),
-  novo `test/dialogue-baseline.test.js`, novo `scripts/update-dialogue-baseline.mjs`,
-  `package.json` (script `test:dialogue-baseline`), `docs/REFATOR_DEEP.md` (registro dos achados),
-  eventual correção factual em `docs/PLANO-CORRECOES-2026-09.md` (nota de divergência, sem reescrever).
+- **Arquivos/módulos afetados (prováveis).** novo `reference/dialogue-inventory.v1.json` (roteiros de
+  entrada), novo `reference/dialogue-baseline.v1.json` (snapshot gerado), novo
+  `scripts/update-dialogue-baseline.mjs` (harness + gerador + modo `--check`), novo
+  `test/dialogue-baseline.test.js`, novo `docs/INVENTARIO-APP-JSX.md` (inventário do F7),
+  `package.json` (`update:dialogue-baseline`, `test:dialogue-baseline`), `docs/REFATOR_DEEP.md`
+  (registro dos achados), eventual correção factual em `docs/PLANO-CORRECOES-2026-09.md`
+  (nota de divergência, sem reescrever).
 - **Dependências.** Nenhuma. É o ponto de entrada.
 - **Alterações arquiteturais necessárias.** Nenhuma alteração de produção. Introduz-se apenas a
   fronteira de teste: os roteiros são executados **sobre o pipeline real** (`processTransmission` +
@@ -205,8 +219,8 @@ critério de conclusão.
   roteiro multi-turno por cenário de `scenarios.js`.
 - **Critério objetivo de conclusão.** (1) `npm run audit` verde antes de qualquer mudança em `src/`;
   (2) baseline versionada e regenerável de forma determinística (duas execuções → mesmo arquivo);
-  (3) inventário do `App.jsx` documentado com decisão *portar/descartar* por item; (4) divergências
-  A3.1–A3.13 registradas com `id` rastreável.
+  (3) inventário do `App.jsx` documentado com decisão *portar/descartar* por item
+  (`docs/INVENTARIO-APP-JSX.md`); (4) divergências A3.1–A3.17 registradas com `id` rastreável.
 
 ### F1 — Conhecimento, interpretação contextual, diálogo e decisão
 
@@ -761,7 +775,7 @@ teste e documentação registrada, nunca "corrigida" no código.
 
 | Fase | Principais arquivos/módulos |
 |---|---|
-| F0 | `reference/dialogue-inventory.v1.json` (novo), `test/dialogue-baseline.test.js` (novo), `scripts/update-dialogue-baseline.mjs` (novo), `package.json` |
+| F0 | `reference/dialogue-inventory.v1.json` (novo), `reference/dialogue-baseline.v1.json` (novo), `scripts/update-dialogue-baseline.mjs` (novo), `test/dialogue-baseline.test.js` (novo), `docs/INVENTARIO-APP-JSX.md` (novo), `package.json` |
 | F1 | `src/dialogue.js` (novo), `src/knowledge.js` (novo), `src/knowledge/evidence-rules.js` (novo), `src/decision.js` (novo), `src/phraseology.js` (novo), `src/controller.js`, `src/retrieval.js`, `src/state-machine.js`, `src/pipeline.js`, `src/llm/semantic-interpreter.js`, `docs/ADR-003-DIALOGO-E-EVIDENCIA.md` (novo) |
 | F2 | `src/readback-rules.js` (novo), `src/readback.js` (novo), `src/state-machine.js`, `src/training.js`, `web/app.js`, testes de controlador/pipeline |
 | F3 | `reference/dialogue-regression-matrix.json` (novo), `scripts/validate-dialogue-matrix.mjs` (novo), `test/dialogue-regression.test.js` (novo), `package.json`, `README.md` |

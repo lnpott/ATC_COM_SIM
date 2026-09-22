@@ -1,0 +1,98 @@
+{
+  "versao": "v1",
+  "finalidade": "Roteiros multi-turno executados sobre o pipeline real (processTransmission + applyStateUpdate + recordTransmission) para produzir o snapshot não-normativo de caracterização (reference/dialogue-baseline.v1.json).",
+  "aviso": "NAO-NORMATIVO. Este arquivo descreve ENTRADAS, não comportamentos corretos. A expectativa registrada em reference/dialogue-baseline.v1.json apenas documenta o que a implementação faz hoje. A verdade operacional vem do corpus (atc-simulator-chunks.json). A matriz normativa é responsabilidade do F3 (reference/dialogue-regression-matrix.json).",
+  "comoUsar": "node scripts/update-dialogue-baseline.mjs (regenera) | node scripts/update-dialogue-baseline.mjs --check (verifica sem escrever) | npm run test:dialogue-baseline",
+  "roteiros": [
+    {
+      "id": "pt_vfr_local_ciclo_completo",
+      "cenario": "vfr_local_pt",
+      "notas": "Ciclo feliz completo em português: táxi, cotejamento, decolagem, circuito, aproximação e pouso, com o estado evoluindo entre os turnos.",
+      "turnos": [
+        { "piloto": "Solo Galeão, Papa Tango Alfa Bravo, posição pátio, solicito instruções de táxi" },
+        { "piloto": "Ciente pista 18, QNH 1015" },
+        { "piloto": "Torre, PT-ABC pronto para partida" },
+        { "piloto": "Ciente pista 18, decolagem autorizada" },
+        { "piloto": "Torre, PT-ABC cinco milhas ao sul, solicito ingresso no circuito" },
+        { "piloto": "Ciente, ingresso no circuito pista 18" },
+        { "piloto": "Controle, PT-ABC solicito aproximação ILS" },
+        { "piloto": "Torre, PT-ABC na final, solicito pouso" }
+      ]
+    },
+    {
+      "id": "en_vfr_local_ciclo_completo",
+      "cenario": "vfr_local_en",
+      "notas": "Mesmo ciclo feliz em inglês, com a lógica de estado idêntica.",
+      "turnos": [
+        { "piloto": "Galeao Ground, Papa Tango Alpha Bravo, stand two, request taxi instructions" },
+        { "piloto": "Roger runway one eight, altimeter 1015" },
+        { "piloto": "Tower, PT-ABC ready for departure" },
+        { "piloto": "Roger runway one eight, cleared for take-off" },
+        { "piloto": "Tower, PT-ABC five miles south, request to join traffic pattern" },
+        { "piloto": "Approach, PT-ABC request ILS approach" },
+        { "piloto": "Tower, PT-ABC final, request landing" }
+      ]
+    },
+    {
+      "id": "pt_ifr_partida_emergencia_com_fogo",
+      "cenario": "ifr_partida_pt",
+      "notas": "Emergência declarada no meio de uma partida em andamento, seguida de informação crítica incompleta (§8 do PLANO_REF) e de um detalhamento posterior.",
+      "turnos": [
+        { "piloto": "Solo Guarulhos, PR-IFR, posição gate, solicito instruções de táxi" },
+        { "piloto": "Ciente pista 10, QNH 1013" },
+        { "piloto": "Torre, PR-IFR pronto para partida" },
+        { "piloto": "Mayday, Mayday, Mayday, PR-IFR, falha de motor" },
+        { "piloto": "Estamos com fogo aqui." },
+        { "piloto": "Fogo no motor direito." },
+        { "piloto": "PR-IFR na final, solicito pouso" }
+      ]
+    },
+    {
+      "id": "pt_vfr_destino_faltante_esclarecimento_e_fora_de_contexto",
+      "cenario": "vfr_local_pt",
+      "notas": "Informação faltante (destino/setor), resposta incompatível com a pergunta do controlador (§5), ambiguidade e retomada correta.",
+      "turnos": [
+        { "piloto": "PT-ABC pretende saída VFR" },
+        { "piloto": "Uma cerveja e um cigarro." },
+        { "piloto": "VFR saída para o setor norte" },
+        { "piloto": "Ciente saída VFR setor norte" },
+        { "piloto": "Solicito táxi e pouso" },
+        { "piloto": "Solo, PT-ABC, solicito instruções de táxi" }
+      ]
+    },
+    {
+      "id": "pt_frequencia_aprovacao_e_assignment",
+      "cenario": "ifr_partida_pt",
+      "notas": "Mudança de frequência como autorização do controlador, seguida de cotejamento, de pedido de informação sem dado configurado e de nova solicitação.",
+      "turnos": [
+        { "piloto": "Controle Brasília, PR-IFR, solicito mudança de frequência" },
+        { "piloto": "Ciente, mudança de frequência aprovada" },
+        { "piloto": "Solicito a frequência de transferência" },
+        { "piloto": "Controle Brasília, PR-IFR, solicito troca para frequência 123,45" },
+        { "piloto": "Ciente, frequência 123,45" }
+      ]
+    },
+    {
+      "id": "pt_sem_cobertura_e_dado_externo",
+      "cenario": "vfr_local_pt",
+      "notas": "Distinção entre fala não interpretável, pedido que exigiria fonte externa (§9) e pedido documentado na mesma sessão.",
+      "turnos": [
+        { "piloto": "Solicito meteorologia detalhada" },
+        { "piloto": "Qual o tempo em Recife?" },
+        { "piloto": "Xenobiologia quântica marciana" },
+        { "piloto": "Solo, PT-ABC posição pátio, solicito instruções de táxi" }
+      ]
+    },
+    {
+      "id": "pt_emergencia_motor_em_rota",
+      "cenario": "emergencia_motor_pt",
+      "notas": "Cenário de emergência já em rota: declaração, cotejamento da resposta do controlador e detalhamento tardio da informação crítica.",
+      "turnos": [
+        { "piloto": "Controle, PT-EMG, vinte milhas ao sul, solicito pouso" },
+        { "piloto": "Mayday, PT-EMG, falha de motor" },
+        { "piloto": "Ciente Mayday, pista 15 disponível, reporte posição" },
+        { "piloto": "Fogo no motor direito." }
+      ]
+    }
+  ]
+}
