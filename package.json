@@ -11,22 +11,18 @@
     "check:index": "node scripts/build-index.mjs --check",
     "update:dialogue-baseline": "node scripts/update-dialogue-baseline.mjs",
     "test:dialogue-baseline": "node --test test/dialogue-baseline.test.js",
+    "test:dialogue": "node scripts/validate-dialogue-matrix.mjs && node --test test/dialogue-regression.test.js",
+    "validate:dialogue-matrix": "node scripts/validate-dialogue-matrix.mjs",
     "audit:corpus": "node scripts/audit-corpus.mjs",
     "test": "node --test test/*.test.js",
     "test:llm": "node --test test-llm/*.test.js",
     "test:stt": "node --test test-stt/*.test.js",
-    "test:ai-sdk": "node --test test/ai-sdk-provider.test.js",
     "benchmark:llm": "node scripts/benchmark-llm.mjs",
     "validate": "node scripts/validate-search.mjs && npm run check:index",
-    "audit": "npm test && npm run validate && npm run audit:corpus && npm run build",
+    "audit": "npm test && npm run test:dialogue && npm run validate && npm run audit:corpus && npm run build",
     "start": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.78",
-    "@vitejs/plugin-react": "latest",
-    "ai": "^7.0.118",
-    "react": "latest",
-    "react-dom": "latest",
     "vite": "latest"
   },
   "engines": {

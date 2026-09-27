@@ -162,6 +162,9 @@ export const EVIDENCE_RULES = Object.freeze({
       realization: 'vfr_departure_clearance',
       requires: {
         field: 'destino ou setor',
+        // Vocabulário do próprio requisito (art. 122, informações de partida VFR): serve tanto
+        // para reconhecer o valor falado quanto para casar o que a interpretação declara faltante.
+        detect: ['destino', 'setor', 'destination', 'sector'],
         sessionField: 'destino',
         fromInterpretation: 'destination',
         question: 'vfr_destination',

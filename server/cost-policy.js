@@ -8,7 +8,6 @@ export function costPolicy(env = process.env) {
     allowPaidApi: String(env.ALLOW_PAID_API ?? 'false').toLowerCase() === 'true',
     groqFreeTierConfirmed: String(env.GROQ_FREE_TIER_CONFIRMED ?? 'false').toLowerCase() === 'true',
     openRouterFreeOnly: String(env.OPENROUTER_FREE_ONLY ?? 'true').toLowerCase() === 'true',
-    aiSdkOptIn: env.AI_PROVIDER === 'ai-sdk' && String(env.ALLOW_PAID_API ?? 'false').toLowerCase() === 'true',
   })
 }
 
@@ -30,11 +29,8 @@ export function assertZeroCostRequest({ provider, model, env = process.env }) {
     return policy
   }
   if (policy.allowPaidApi) throw new PaidProviderBlockedError(provider)
-  if (provider === 'ai-sdk') {
-    // Opt-in estreito: apenas o provider explícito AI_PROVIDER=ai-sdk com ALLOW_PAID_API=true.
-    if (!policy.aiSdkOptIn) throw new PaidProviderBlockedError(provider)
-    return policy
-  }
+  // O único provider pago que existia (o opt-in do Vercel AI SDK para o caminho sem grounding) foi
+  // removido com a interface paralela no F7: nenhum provider fora da lista abaixo é alcançável.
   if (provider === 'groq') {
     if (!policy.groqFreeTierConfirmed) throw new UnverifiedFreeTierError(provider)
     return policy

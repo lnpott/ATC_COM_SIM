@@ -27,18 +27,30 @@ Execute `npm run audit:corpus` para reproduzir essas métricas.
 
 ## Arquitetura nova
 
+> Atualizado após F1/F6/F7. As etapas abaixo são as do fluxo em produção hoje; as afirmações
+> anteriores sobre “formulação de consulta por intenção” e “fonte normativa esperada por intenção”
+> descrevem a arquitetura pré-F1 e foram substituídas (o histórico está em `docs/REFATOR_DEEP.md`).
+
 O fluxo de produção é:
 
 1. entrada original e normalização de fonia;
-2. interpretação determinística em conceitos e entidades (`transmission.js`);
-3. enriquecimento controlado com estado da sessão;
-4. formulação de consulta por intenção (`retrieval.js`);
-5. BM25 da frase original + consultas expandidas + prior documental por metadados;
-6. fusão/reranking e expansão de vizinhos da mesma seção/artigo;
-7. verificação de que a fonte esperada foi realmente recuperada;
-8. decisão diferenciada: não compreendido, falta de dado, documentado ou sem cobertura;
-9. atualização validada de fase, frequência, posição e contexto;
-10. resposta, evidência e avaliação.
+2. interpretação: `POST /api/interpret-transmission` (LLM-first, structured output validado) com
+   `interpretTransmission` determinístico como fallback identificado;
+3. **resolução no contexto** (`dialogue.js`): se há autorização a cotejar e a fala traz marcador
+   documentado de cotejamento, a interpretação passa a ser de cotejamento **antes** da recuperação;
+4. enriquecimento controlado com estado da sessão;
+5. **plano de recuperação por predicado documental** (`knowledge.js` + `knowledge/evidence-rules.js`):
+   a família de intenção escolhe a variante documentada e os artigos candidatos, cada um com citação;
+6. BM25 da frase original + consultas expandidas + prior documental por metadados + fallback de
+   língua original (`retrieval.js`);
+7. fusão/reranking e expansão de vizinhos da mesma seção/artigo;
+8. **cobertura** (`knowledge.js`): só é `documented` quando a variante foi escolhida e a fonte
+   realmente recuperada; caso contrário, o motivo é explícito (informação do piloto faltante, dado de
+   sessão ausente, dado externo não integrado, família não implementada ou fala não compreendida);
+9. **realização** (`phraseology.js`): a fala vem de elementos tipados, com citação documental;
+   elemento de instrução sem fonte recuperada bloqueia a decisão;
+10. atualização validada de fase, frequência, posição e contexto (`state-machine.js`);
+11. resposta, evidência, fonia e avaliação.
 
 A interpretação usa grupos de conceitos e radicais independentes, não uma lista de
 frases completas. Assim, saudações, indicativo, ATIS, posição, VFR/IFR, destino e
@@ -48,11 +60,15 @@ do baseline (recall de 50% para 100%), sem custo, rede ou exposição de chaves.
 
 ## Grounding e estado
 
-Cada intenção possui uma fonte normativa esperada. O prior de metadados só coloca
-esse chunk entre os candidatos; o controlador ainda exige que ele exista no
-contexto recuperado e só cita IDs presentes nesse contexto. Uma intenção clara sem
-dado obrigatório pede esclarecimento. Intenção desconhecida pede intenções; uma
-categoria entendida sem fonte configurada retorna ausência real de cobertura.
+Cada **variante documentada** de uma família de intenção declara os artigos que a fundamentam
+(`src/knowledge/evidence-rules.js`) e cada entrada carrega sua citação. O prior de metadados só
+coloca esses chunks entre os candidatos; o controlador exige que existam no contexto recuperado e só
+cita IDs presentes nesse contexto. Uma variante que exige informação do piloto gera pergunta
+registrada no estado (`contexto.pergunta_pendente`); uma família sem contrato de decisão é declarada
+como limitação do simulador (`family-not-implemented`) — nunca como ausência de cobertura no manual,
+que era o defeito A3.1. O sinal de informação faltante da interpretação é consumido como **entrada**
+da decisão: ele só pode confirmar que um requisito documentado não foi satisfeito, jamais criar
+requisito novo.
 
 O estado aceita somente uma lista fechada de campos. ATIS, regras de voo, destino,
 última intenção e última autorização são isolados por instância de sessão. Posição
@@ -103,10 +119,12 @@ de validação humana no navegador/sistema operacional de destino.
 
 Após nova validação humana, o parser lexical foi reposicionado como fallback. O
 caminho normal chama `POST /api/interpret-transmission`; um provider permitido pela política zero-cost retorna apenas uma
-interpretação validada pelo schema. Estado confirmado e no máximo duas mensagens
-recentes entram como contexto. A interpretação gera busca, mas não autoriza,
-seleciona evidência nem altera estado. A ADR completa está em
-`docs/ADR-001-LLM-FIRST.md`.
+interpretação validada pelo schema. Estado confirmado e histórico da sessão entram como contexto,
+**cortado pelo orçamento da janela do candidato** que será tentado (`src/llm/context-budget.js`),
+preservando identidade, fase, frequência, última autorização e autorização/pergunta pendente. A
+interpretação gera busca, mas não autoriza, seleciona evidência nem altera estado. As ADRs completas
+estão em `docs/ADR-001-LLM-FIRST.md`, `docs/ADR-002-ZERO-COST.md` e
+`docs/ADR-003-DIALOGO-E-EVIDENCIA.md`.
 
 Falhas do provider são diagnosticadas separadamente e ativam
 `deterministic_fallback`. O retrieval deixou também de inserir automaticamente o

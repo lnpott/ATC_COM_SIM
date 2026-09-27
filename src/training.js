@@ -1,45 +1,21 @@
-const REQUIRED_READBACK = [
-  { item: 'pista', aliases: ['pista', 'runway'] },
-  { item: 'qnh', aliases: ['qnh', 'altimeter'] },
-  { item: 'nível', aliases: ['nível', 'nivel', 'flight level'] },
-  { item: 'proa', aliases: ['proa', 'heading'] },
-  { item: 'frequência', aliases: ['frequência', 'frequencia', 'frequency'] },
-  { item: 'transponder', aliases: ['transponder', 'squawk'] },
-];
-
-export function evaluateReadback({ autorizacao, cotejamento }) {
-  const clearance = autorizacao.toLocaleLowerCase('pt-BR');
-  const spoken = cotejamento.toLocaleLowerCase('pt-BR');
-  const required = REQUIRED_READBACK.filter(({ aliases }) => aliases.some((term) => clearance.includes(term)));
-  const expected = required.map(({ item }) => item);
-  const omitidos = required.filter(({ aliases }) => !aliases.some((term) => spoken.includes(term))).map(({ item }) => item);
-  return { correto: omitidos.length === 0, itens_esperados: expected, omitidos, score: expected.length ? Math.round(100 * (expected.length - omitidos.length) / expected.length) : 100 };
-}
-
-/** Valores operacionais reconhecíveis em uma fala (usado pelo cotejamento e pelo diálogo). */
-export function operationalValues(text) {
-  const normalized = text.toLocaleLowerCase('pt-BR').replace(',', '.')
-  const patterns = {
-    pista: /(?:pista|runway)\s*(\d{1,2}[lrc]?)/i,
-    qnh: /(?:qnh|altimeter)\s*(\d{3,4})/i,
-    frequência: /(?:frequ[eê]ncia|frequency|contate|contact)?\s*(1\d{2}[.]\d{1,3})/i,
-    proa: /(?:proa|heading)\s*(\d{2,3})/i,
-    nível: /(?:n[ií]vel|level|fl)\s*(\d{2,3})/i,
-    transponder: /(?:transponder|squawk)\s*(\d{4})/i,
-  }
-  return Object.fromEntries(Object.entries(patterns).map(([key, pattern]) => [key, pattern.exec(normalized)?.[1]]).filter(([, value]) => value))
-}
-
-export function evaluateReadbackSemantic({ autorizacao, cotejamento }) {
-  const expected = operationalValues(autorizacao)
-  const received = operationalValues(cotejamento)
-  const required = Object.keys(expected)
-  if (!required.length) return { classification: 'ambiguous', correct: false, missing: [], contradictory: [], expected, received }
-  const missing = required.filter((key) => !received[key])
-  const contradictory = required.filter((key) => received[key] && received[key] !== expected[key])
-  const classification = contradictory.length ? 'contradictory' : missing.length ? 'incomplete' : 'correct'
-  return { classification, correct: classification === 'correct', missing, contradictory, expected, received }
-}
+/**
+ * Treino e relatório de sessão.
+ *
+ * O cotejamento saiu daqui para `src/readback-rules.js` (F2): havia **dois** avaliadores
+ * divergentes neste arquivo (`evaluateReadback` por substring e `evaluateReadbackSemantic` por
+ * regex sobre todo o texto), e ambos exigiam de volta tudo que a frase do controlador continha —
+ * inclusive QNH meramente informativo. O avaliador consolidado compara a autorização pendente
+ * estruturada com o texto cotejado e cobra somente o que a autorização exige.
+ *
+ * `operationalValues` continua exportado daqui para os consumidores históricos (o diálogo usa a
+ * extração de valores para decidir se uma autorização tem item cotejável).
+ */
+export {
+  buildPendingAuthorization,
+  evaluateReadbackAgainstPending,
+  operationalValues,
+  pendingFromState,
+} from './readback-rules.js'
 
 export function explainResult(result) {
   if (!result?.id || !result.documento || !result.artigo) throw new TypeError('resultado sem procedência.');

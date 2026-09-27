@@ -16,7 +16,25 @@ const INTENTS = Object.freeze({
   vfr_departure: { concepts: [['vfr'], ['saida', 'departure', 'outbound', 'setor', 'sector']], phase: 'decolagem' },
   readback: { concepts: [['ciente', 'copiado', 'roger', 'wilco', 'readback', 'cotej'], ['pista', 'runway', 'qnh', 'proa', 'heading', 'nivel', 'level']], phase: null },
   weather_request: { concepts: [['meteorolog', 'weather', 'metar'], ['solicit', 'request', 'informe', 'report']], phase: null },
+  // "REPORTE — Passe-me a seguinte informação" (art. 39, glossário `pt-en`) e a reportagem de
+  // posição do voo. A regra documental já existe (`position_report` em evidence-rules.js); sem a
+  // intenção no léxico determinístico ela era classificada como `unknown` e virava "não entendi".
+  // O segundo grupo NÃO repete "posição": `posição pátio, solicito táxi` é pedido de táxi, e a
+  // coincidência de "posição" com "reporte" empatava as duas famílias (virava `ambiguous`).
+  position_report: { concepts: [['posic', 'position', 'reportand', 'reporting', 'reporte'], ['milhas', 'miles', 'sul', 'norte', 'north', 'south', 'leste', 'oeste', 'east', 'west']], phase: null },
+  // Art. 71 (impossibilidade de cumprir instrução ATC) e art. 43 ("NEGATIVO"/"UNABLE").
+  unable: { concepts: [['impossibilit', 'unable', 'inapto', 'impedid'], ['instruc', 'instruction', 'cumprir', 'comply', 'resolucao', 'resolution']], phase: null },
+  // Arremetida / go around / aproximação perdida (art. 114 e Tabela 15). Família ainda sem
+  // contrato de decisão (`PENDING_FAMILIES`), reconhecida para não virar pedido de aproximação.
+  go_around: { concepts: [['arremet', 'missed approach', 'missed', 'goaround', 'go around'], ['aproxim', 'approach', 'nova', 'new', 'solicit', 'arremet']], phase: 'aproximacao' },
 })
+
+/**
+ * Intenções que declaram um fato operacional explícito e por isso não podem virar "ambiguous"
+ * quando o léxico empata com outra família: uma arremetida contém "aproximação", e uma
+ * impossibilidade contém "instrução" — o marcador explícito prevalece.
+ */
+const EXPLICIT_MARKERS = Object.freeze(['vfr_departure', 'go_around', 'unable'])
 
 const REQUEST = ['solicit', 'request', 'pronto', 'ready', 'gostaria', 'necessit', 'intend']
 const SERVICES = ['solo', 'ground', 'torre', 'tower', 'controle', 'control', 'aproximacao', 'approach', 'radio', 'trafego', 'delivery']
@@ -72,7 +90,7 @@ export function interpretTransmission(text, { idioma = 'pt', state } = {}) {
     .sort((a, b) => b.score - a.score)
   const top = ranking[0]
   const second = ranking[1]
-  const ambiguous = Boolean(top && second && top.score - second.score < 0.12 && top.name !== 'vfr_departure' && second.name !== 'vfr_departure')
+  const ambiguous = Boolean(top && second && top.score - second.score < 0.12 && !EXPLICIT_MARKERS.includes(top.name) && !EXPLICIT_MARKERS.includes(second.name))
   const serviceIndex = tokens.findIndex((token) => SERVICES.includes(token))
   const stationCalled = serviceIndex >= 0 ? [tokens[serviceIndex], tokens[serviceIndex + 1]].filter(Boolean).join(' ') : undefined
   const atis = matchAfter(text, ['informação', 'informacao', 'information'], '[A-Za-z]+')
@@ -87,7 +105,14 @@ export function interpretTransmission(text, { idioma = 'pt', state } = {}) {
   const request = hasStem(tokens, REQUEST)
   const frequencyRequestType = hasStem(tokens, ['troca', 'mudanc', 'change']) ? 'change_permission' : hasStem(tokens, ['solicit', 'request']) && hasStem(tokens, ['frequenc', 'frequency']) ? 'assignment_request' : undefined
   const vfrDeparture = ranking.find(({ name }) => name === 'vfr_departure')
-  const primary = top?.name === 'takeoff_request' && vfrDeparture?.score >= 0.85 ? vfrDeparture : top
+  // Marcador explícito vence a coincidência lexical, exceto diante de emergência, que assume a
+  // conversa (mesma precedência documentada do diálogo).
+  const explicit = ranking.find(({ name }) => ['go_around', 'unable'].includes(name))
+  const primary = top?.name === 'takeoff_request' && vfrDeparture?.score >= 0.85
+    ? vfrDeparture
+    : explicit && top?.name !== explicit.name && top?.name !== 'emergency'
+      ? explicit
+      : top
   const confidence = ambiguous ? Math.min(primary?.score ?? 0, 0.49) : primary?.score ?? 0
   const recognized = new Set(ranking.flatMap(({ name }) => INTENTS[name].concepts.flat()).map(FOLD))
   const unknownElements = tokens.filter((token) => token.length > 2 && !KNOWN.has(token) && ![...recognized].some((stem) => token.startsWith(stem))).slice(0, 12)

@@ -19,17 +19,27 @@
  *   no manual mesmo quando o artigo existia (A3.1).
  */
 import { interpretTransmission } from './transmission.js'
-import { evaluateReadbackSemantic } from './training.js'
-import { COVERAGE, formulateSearch, resolveCoverage } from './knowledge.js'
+import { advancePhase } from './state-machine.js'
+import { buildPendingAuthorization, evaluateReadbackAgainstPending, pendingFromState } from './training.js'
+import { COVERAGE, COVERAGE_REASON, formulateSearch, resolveCoverage } from './knowledge.js'
 import { DIALOGUE_ACT, createPendingQuestion, evaluateDialogue, pendingContextUpdate } from './dialogue.js'
 import { compose } from './phraseology.js'
 
-const INTENTS = [
-  { name: 'emergencia', terms: ['mayday', 'pan pan', 'emergência', 'emergency', 'falha de motor'], source: 'MCA-100-16-artigo-0064-001' },
-  { name: 'taxi', terms: ['táxi', 'taxi'], source: 'MCA-100-16-artigo-0125-001' },
-  { name: 'decolagem', terms: ['decolagem', 'partida', 'departure', 'take-off'], source: 'MCA-100-16-artigo-0126-001' },
-  { name: 'aproximacao', terms: ['aproximação', 'aproximacao', 'approach', 'ils'], source: 'MCA-100-16-artigo-0114-001' },
-  { name: 'pouso', terms: ['pouso', 'landing', 'final'], source: 'MCA-100-16-artigo-0132-001' },
+/**
+ * Detecção lexical legada: apenas termos, **sem artigo associado**.
+ *
+ * O mapa `intent → único artigo fixo` que existia aqui foi removido no F1 (critério 1 da fase):
+ * o que fundamenta uma decisão agora é a variante documentada escolhida em
+ * `src/knowledge/evidence-rules.js`, e a fonte que a decisão cita é sempre a que o BM25
+ * recuperou. Esta lista continua existindo só para comparação histórica e para o caminho sem
+ * interpretação semântica (o parser determinístico é quem reconhece a intenção de verdade).
+ */
+const LEGACY_TERMS = [
+  { name: 'emergencia', terms: ['mayday', 'pan pan', 'emergência', 'emergency', 'falha de motor'] },
+  { name: 'taxi', terms: ['táxi', 'taxi'] },
+  { name: 'decolagem', terms: ['decolagem', 'partida', 'departure', 'take-off'] },
+  { name: 'aproximacao', terms: ['aproximação', 'aproximacao', 'approach', 'ils'] },
+  { name: 'pouso', terms: ['pouso', 'landing', 'final'] },
 ]
 
 const LEGACY_NAMES = { taxi: 'taxi_request', decolagem: 'takeoff_request', aproximacao: 'approach_request', pouso: 'landing_request', emergencia: 'emergency' }
@@ -37,7 +47,7 @@ const LEGACY_NAMES = { taxi: 'taxi_request', decolagem: 'takeoff_request', aprox
 /** Detecção lexical legada. Mantida apenas para comparação histórica e para o caminho sem interpretação. */
 export function detectIntent(text) {
   const normalized = text.toLocaleLowerCase('pt-BR')
-  return INTENTS.find(({ terms }) => terms.some((term) => normalized.includes(term))) ?? null
+  return LEGACY_TERMS.find(({ terms }) => terms.some((term) => normalized.includes(term))) ?? null
 }
 
 export function searchPhaseForIntent(intent, currentPhase) {
@@ -54,7 +64,10 @@ function missingInformationReply({ language, requirement, state, intent }) {
   return {
     covered: false,
     status: COVERAGE.NEEDS_CLARIFICATION,
-    reason: `missing:${requirement.field}`,
+    // `reason` é o código estável da taxonomia (usável por diagnóstico e teste); o campo exato
+    // que falta fica em `reasonDetail`, `coverage.requirement.field` e `pendingQuestion.field`.
+    reason: COVERAGE_REASON.MISSING_PILOT_INFORMATION,
+    reasonDetail: `missing:${requirement.field}`,
     spokenText: composed.text,
     sourceIds: [],
     stateUpdate: pendingContextUpdate(pending),
@@ -74,6 +87,7 @@ function pendingQuestionReply({ language, pending, state }) {
     covered: false,
     status: COVERAGE.NEEDS_CLARIFICATION,
     reason: `pending-question:${pending.field}`,
+    reasonDetail: `pending-question:${pending.field}`,
     spokenText: composed.text,
     sourceIds: pending.sources ?? [],
     stateUpdate: pendingContextUpdate(pending),
@@ -112,6 +126,7 @@ function unfilledReply({ status, reason, language, coverage }) {
 }
 
 export function decideGroundedReply({ text, idioma, state, searchResults, interpretation, plan: suppliedPlan }) {
+  let readbackAssessment = null
   const language = idioma === 'en' || idioma === 'en-US' ? 'en' : 'pt'
   const evidence = (searchResults ?? []).filter(({ score }) => score > 0)
   const legacy = detectIntent(text)
@@ -152,7 +167,9 @@ export function decideGroundedReply({ text, idioma, state, searchResults, interp
 
   // Cotejamento: avaliação segue a de F2 (arts. 12 § 1º e § 2º e art. 45). Aqui apenas roteia.
   if (effective.intent === 'readback') {
-    const assessment = evaluateReadbackSemantic({ autorizacao: state?.contexto?.ultima_autorizacao, cotejamento: text })
+    // Avaliação contra a autorização pendente estruturada: só o que ela exige é cobrado
+    // (QNH informativo de um táxi não volta como item obrigatório, vento nunca é exigido).
+    const assessment = evaluateReadbackAgainstPending(pendingFromState(state), text)
     if (!assessment.correct) {
       // Art. 12, § 1º: cotejamento incorreto → "negativo" seguido da versão correta. O estado NÃO
       // é atualizado: a obrigação de cotejar a autorização original continua pendente até que
@@ -165,6 +182,9 @@ export function decideGroundedReply({ text, idioma, state, searchResults, interp
         coverage, readbackAssessment: assessment, elements: corrected.elements,
       })
     }
+    // Cotejamento correto: a avaliação acompanha a decisão para que a UI pontue exatamente o que
+    // o controlador decidiu — não há segundo avaliador no navegador.
+    readbackAssessment = assessment
   }
 
   const composed = compose(coverage.variant.realization, {
@@ -172,12 +192,12 @@ export function decideGroundedReply({ text, idioma, state, searchResults, interp
     destination: effective.destination ?? state?.contexto?.destino,
   })
   const spokenText = composed.text
-  const stateUpdate = buildStateUpdate({ effective, state, spokenText })
+  const stateUpdate = buildStateUpdate({ effective, state, spokenText, elements: composed.elements, fonteId: coverage.sources[0] })
   return withDialogue({
     covered: true, status: COVERAGE.DEMONSTRATED, reason: 'grounded',
     spokenText, sourceIds: coverage.sources,
     source: evidence.find(({ id }) => id === coverage.sources[0]) ?? evidence[0] ?? null,
-    stateUpdate, coverage, elements: composed.elements,
+    stateUpdate, coverage, elements: composed.elements, readbackAssessment,
   })
 }
 
@@ -188,18 +208,34 @@ function contextUpdate(interpretation) {
 }
 
 /**
- * Atualização de estado validada. A tabela de transições de fase/frequência é preservada como
- * estava (F2 revisa as transições sem documentação, ver A3.17). O que F1 acrescenta é o ciclo de
- * vida da pergunta pendente: ela é encerrada sempre que a comunicação foi tratada.
+ * Pouso autorizado com o estado acompanhando a autorização (§11 — resolve A3.17).
+ *
+ * O art. 132 trata da reta final e do pouso: para autorizar, o estado precisa estar na
+ * aproximação. Quando a aeronave está no ar mas ainda não está na aproximação — o caso da
+ * emergência declarada logo depois da decolagem —, o estado dá o **primeiro passo válido** rumo
+ * ao pouso (a mesma transição `decolagem → aproximacao` que a autorização de aproximação já usa),
+ * em vez de autorizar pousando com o estado ainda em `decolagem`. No solo não há aproximação a
+ * registrar: o pedido de pouso não altera a fase, em vez de saltar por fases inexistentes.
  */
-function buildStateUpdate({ effective, state, spokenText }) {
+function landingTransition(state, context) {
+  if (state.fase === 'solo') return context
+  const phase = advancePhase(state.fase, 'pouso')
+  return phase ? { fase: phase, frequencia: 'torre', contexto: context.contexto } : context
+}
+
+/**
+ * Atualização de estado validada. A tabela de transições de fase/frequência é preservada como
+ * estava; o que F1/F2 acrescentam é o ciclo de vida da pergunta pendente, a autorização pendente
+ * estruturada e o pouso ciente da fase (A3.17).
+ */
+function buildStateUpdate({ effective, state, spokenText, elements = [], fonteId = null }) {
   const context = contextUpdate(effective)
   const transitions = {
     taxi_request: context,
     takeoff_request: state.fase === 'solo' ? { fase: 'decolagem', frequencia: 'torre', contexto: context.contexto } : context,
     traffic_circuit: ['decolagem', 'rota'].includes(state.fase) ? { fase: 'aproximacao', frequencia: 'torre', contexto: context.contexto } : context,
     approach_request: ['decolagem', 'rota'].includes(state.fase) ? { fase: 'aproximacao', frequencia: 'aproximacao', contexto: context.contexto } : context,
-    landing_request: state.fase === 'aproximacao' ? { fase: 'pouso', frequencia: 'torre', contexto: context.contexto } : context,
+    landing_request: landingTransition(state, context),
     emergency: context,
     frequency_change: context,
     vfr_departure: context,
@@ -208,12 +244,25 @@ function buildStateUpdate({ effective, state, spokenText }) {
     unable: context,
   }
   const update = transitions[effective.intent] ?? context
+  const isReadback = effective.intent === 'readback'
+  // Cotejamento correto não é autorização nova: a confirmação NÃO pode sobrescrever a
+  // autorização cotejada (senão a sessão perde o que foi autorizado e um cotejamento seguinte
+  // avaliaria contra a própria confirmação).
+  const authorization = isReadback
+    ? { ultima_autorizacao: state?.contexto?.ultima_autorizacao ?? null, ultima_instrucao_controlador: state?.contexto?.ultima_instrucao_controlador ?? null }
+    : { ultima_autorizacao: spokenText, ultima_instrucao_controlador: spokenText }
   update.contexto = {
     ...(update.contexto ?? {}),
-    ultima_autorizacao: spokenText,
-    ultima_instrucao_controlador: spokenText,
+    ...authorization,
     ultima_intencao: effective.intent,
-    cotejamento_pendente: effective.intent !== 'readback',
+    cotejamento_pendente: !isReadback,
+    // Autorização pendente estruturada (F2): obrigatórios vs. informativos vêm dos elementos
+    // tipados da realização, não de quantos números a frase contém. Cotejada corretamente, ela
+    // permanece no estado marcada como `cotejada` — apagar o objeto perderia os papéis e um
+    // cotejamento seguinte voltaria a exigir o informativo (QNH) como obrigatório.
+    autorizacao_pendente: isReadback
+      ? (state?.contexto?.autorizacao_pendente ? { ...state.contexto.autorizacao_pendente, cotejada: true } : null)
+      : buildPendingAuthorization({ intent: effective.intent, fonteId, text: spokenText, elements }),
     emergencia_ativa: effective.intent === 'emergency' || state.contexto?.emergencia_ativa === true,
     ...pendingContextUpdate(null).contexto,
   }

@@ -11,7 +11,6 @@
   <header class="topbar">
     <div class="brand"><span class="brand-mark">A</span><div><strong>ATC COM SIM</strong><small>Treino de fonia documentado</small></div></div>
     <div class="top-actions">
-      <a class="voice-link" href="/voice.html">VOICE LAB</a>
       <div id="system-status" class="status"><span></span> Carregando índice…</div>
     </div>
   </header>
@@ -25,17 +24,21 @@
       <aside class="panel controls">
         <div class="panel-heading"><span>01</span><h2>Cenário</h2></div>
         <label>Exercício<select id="scenario"><option value="vfr_local_pt">VFR local · Português</option><option value="vfr_local_en">VFR local · English</option><option value="ifr_partida_pt">Partida IFR · Português</option><option value="emergencia_motor_pt">Emergência de motor</option></select></label>
+        <div class="controls-block"><small class="block-label">Idioma da sessão</small><div class="field-row"><strong id="language-status">PT</strong><button type="button" id="language-toggle" class="secondary compact">PT ⇄ EN</button></div><small class="hint">O idioma seleciona a base documental recuperada, a fraseologia e a voz; por isso a alternância reinicia a sessão no cenário equivalente.</small></div>
         <div class="frequency"><small>FREQUÊNCIA ATIVA</small><strong id="frequency">SOLO</strong><span>118.10 MHz</span></div>
+        <label>Modelo LLM<select id="model"><option value="">Automático (cascata gratuita)</option></select><small class="hint">A escolha prioriza o candidato; se ele falhar, a resposta segue pelo próximo modelo gratuito.</small></label>
         <div class="tips"><strong>Chamadas sugeridas</strong><button data-prompt="Solo, Papa Tango Alfa Bravo, solicito instruções de táxi">Solicitar táxi</button><button data-prompt="Torre, Papa Tango Alfa Bravo, pronto para partida">Pronto para partida</button><button data-prompt="Mayday, falha de motor">Declarar emergência</button></div>
         <button id="new-session" class="secondary">↻ Reiniciar sessão</button>
       </aside>
 
       <section class="panel radio-panel">
-        <div class="panel-heading"><span>02</span><h2>Frequência</h2><button id="sound-toggle" class="icon-button" title="Alternar voz">◉ VOZ</button></div>
+        <div class="panel-heading"><span>02</span><h2>Frequência</h2><div class="heading-actions"><small id="model-status" class="model-status" title="Modelo que respondeu a última transmissão">automático</small><small id="channel-status" class="channel-status" title="Estado do canal de rádio">LIVRE</small><button id="sound-toggle" class="icon-button" title="Alternar voz">◉ VOZ</button></div></div>
         <div id="transcript" class="transcript" aria-live="polite"><div class="empty"><span>⌁</span><strong>Frequência livre</strong><p>Use uma sugestão ou pressione o PTT para iniciar.</p></div></div>
         <form id="transmission-form" class="composer">
           <textarea id="transmission" rows="2" placeholder="Digite uma transmissão ou use o microfone…" required></textarea>
           <button type="button" id="ptt" class="ptt"><span>●</span><strong>PTT</strong><small>PRESSIONE PARA FALAR</small></button>
+          <p id="speech-warning" class="speech-warning" hidden></p>
+          <p class="hint ptt-hint">Aperte e segure o PTT; a gravação termina quando você soltar em qualquer lugar da tela. O botão fica indisponível enquanto a frequência está sendo ocupada pela resposta.</p>
           <button type="submit" class="send">Transmitir ↗</button>
         </form>
       </section>
