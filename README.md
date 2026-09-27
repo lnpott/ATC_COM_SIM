@@ -32,6 +32,7 @@ npm run test:stt  # fixture e cadeia STT gratuita
 npm run test:llm  # OpenRouter real, somente modelos free
 npm run benchmark:llm # precisão/schema/latência apenas de candidatos free
 npm run validate  # consultas de referência e reprodutibilidade do índice
+npm run test:ai-sdk # política de custo e provider do Vercel AI SDK (mock fetch)
 npm run build     # build de produção em dist/
 npm run audit     # todos os comandos acima
 npm start         # serve dist/ após um build
@@ -50,6 +51,32 @@ A configuração completa, sem valores secretos, está em `.env.example`. A orde
 é Groq fixo somente se o Free tier for confirmado, OpenRouter fixo `:free` primário,
 fixos `:free` subsequentes, `openrouter/free` e parser determinístico. Gemini não é
 usado. TTS permanece `SpeechSynthesis` do browser.
+
+### Vercel AI SDK (opt-in, apenas `/api/generate-reply`)
+
+O Vercel AI SDK (`ai` + `@ai-sdk/openai`) está integrado em
+`server/ai-sdk-provider.js` como um provedor opcional para a resposta do
+controlador no loop de voz (`server/providers.js`). Ele nunca é usado pelo
+interpretador semântico (`/api/interpret-transmission`), que mantém sua cadeia
+free-only (ADR-002).
+
+Ativação exige **duas** variáveis ao mesmo tempo:
+
+```bash
+AI_PROVIDER=ai-sdk
+ALLOW_PAID_API=true
+OPENAI_API_KEY=sk-...   # via painel de chaves/secret manager, nunca no repositório
+```
+
+Enquanto `ZERO_COST_MODE=true` (padrão), o provedor permanece bloqueado por
+`server/cost-policy.js` mesmo com chave configurada. Com `ZERO_COST_MODE=false`,
+o interpretador semântico continua sujeito à política free-only.
+
+Variáveis opcionais: `AI_SDK_MODEL` (padrão `gpt-4o-mini`),
+`AI_SDK_TIMEOUT_MS` (padrão `12000`) e `OPENAI_BASE_URL` (gateway compatível com
+a API Chat Completions). A chamada usa `generateText` do AI SDK com
+`abortSignal` de timeout; sem streaming, para manter o contrato simples de
+resposta única do endpoint.
 
 ## Implantação na Vercel
 

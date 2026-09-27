@@ -1,3 +1,6 @@
+import { assertZeroCostRequest } from './cost-policy.js'
+import { createAiSdkProvider } from './ai-sdk-provider.js'
+
 const SYSTEM_PROMPT = `Você participa de uma prova de conceito de áudio para um simulador ATC.
 Responda como um controlador, de forma breve e no idioma solicitado. Nesta fase não há base
 documental nem estado de voo: não emita uma autorização operacional real e deixe claro que a
@@ -27,14 +30,15 @@ async function mock(_messages, context) {
     : 'Transmissão recebida. Ciclo de voz demonstrado; isto não é uma autorização operacional.'
 }
 
-const providers = { groq, mock, 'auto-free': mock }
+// O provider ai-sdk (Vercel AI SDK) recebe env por chamada e devolve { reply }.
+const providers = { groq, mock, 'auto-free': mock, 'ai-sdk': (messages, context, env) => createAiSdkProvider({ env }).generate(messages, context) }
 
 export async function runProvider(messages, context, env = process.env) {
-  const providerName = (env.LLM_PROVIDER || 'auto-free').toLowerCase()
+  let providerName = (env.LLM_PROVIDER || 'auto-free').toLowerCase()
+  if (providerName === 'auto-free') providerName = env.AI_PROVIDER === 'ai-sdk' ? 'ai-sdk' : 'mock'
   const provider = providers[providerName]
   if (!provider) throw new Error(`Provedor LLM_PROVIDER desconhecido: ${providerName}.`)
   const reply = await provider(messages, context, env)
   if (!reply) throw new Error('O provedor retornou uma resposta vazia.')
-  return reply
+  return typeof reply === 'object' && reply !== null && typeof reply.reply === 'string' ? reply.reply : reply
 }
-import { assertZeroCostRequest } from './cost-policy.js'
