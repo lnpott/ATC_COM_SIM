@@ -59,6 +59,32 @@ test('comunicação que não responde à pergunta pendente é reconhecida e o co
   assert.equal(readPendingQuestion(offTopic.state).field, 'destino ou setor', 'a pergunta continua pendente')
 })
 
+test('resposta à pergunta pendente vence o pedido de confirmação, que é procurado por substring (A1)', () => {
+  // O marcador de pedido de confirmação é um termo procurado por substring ("confirmado" contém
+  // "confirm") e a própria pergunta pendente é um pedido de confirmação (art. 39, CONFIRME): na ordem
+  // antiga, quem respondia "Confirmado, …" ouvia que não havia respondido, e o controlador repetia a
+  // pergunta indefinidamente.
+  const question = say(stateFor(), 'PT-ABC pretende saída VFR')
+  assert.equal(question.decision.pendingQuestion.field, 'destino ou setor')
+
+  for (const answer of ['VFR saída para o setor norte', 'Confirmado, VFR saída para o setor norte', 'Confirmo: saída VFR para o setor norte']) {
+    const located = say(question.state, answer)
+    assert.equal(located.decision.dialogueAct, DIALOGUE_ACT.ANSWER, answer)
+    assert.equal(located.decision.status, 'documented', answer)
+    assert.deepEqual(located.decision.sourceIds, ['MCA-100-16-artigo-0122-001'], answer)
+    assert.equal(readPendingQuestion(located.state), null, 'a pergunta pendente é encerrada quando respondida')
+  }
+
+  // Pedido ao controlador sem o vocabulário da pendente continua não sendo resposta: ele reformula.
+  const request = say(question.state, 'Confirme minha autorização')
+  assert.equal(request.decision.dialogueAct, DIALOGUE_ACT.UNRELATED)
+  assert.equal(request.decision.reason, 'pending-question:destino ou setor')
+  assert.equal(readPendingQuestion(request.state).field, 'destino ou setor', 'a pergunta continua pendente')
+
+  // Fora do contexto de pergunta pendente, o pedido de confirmação segue o caminho normal.
+  assert.equal(say(stateFor(), 'Confirme minha autorização').decision.dialogueAct, DIALOGUE_ACT.NORMAL)
+})
+
 test('declaração de fogo sem local gera a pergunta documentada e a resposta alcança o art. 66', () => {
   const initial = stateFor('vfr_local_pt', 'rota')
   const fire = say(initial, 'Estamos com fogo aqui.')

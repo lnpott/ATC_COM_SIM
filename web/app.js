@@ -2,7 +2,7 @@ import { normalizePhraseology } from '../src/normalization.js';
 import { processTransmission } from '../src/pipeline.js';
 import { SCENARIOS, getScenario } from '../src/scenarios.js';
 import { ManualSearch } from '../src/search.js';
-import { createRecognitionSession } from '../src/speech.js';
+import { createRecognitionSession, speakTransmission } from '../src/speech.js';
 import { createAudioCaptureSession } from '../src/audio-capture.js';
 import { limitedSessionContext } from '../src/llm/semantic-interpreter.js';
 // O navegador corta o contexto pelo teto conservador antes do transporte; o servidor corta de novo,
