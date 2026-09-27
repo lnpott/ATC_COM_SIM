@@ -1,0 +1,125 @@
+{
+  "versao": "v1",
+  "finalidade": "Matriz NORMATIVA de regressão do diálogo ATC (F3). Diferente do snapshot de caracterização (reference/dialogue-baseline.v1.json), cada expectativa aqui afirma o que DEVE acontecer numa sequência multi-turno, com a fonte documental que a fundamenta e a classificação do cotejamento quando o turno é uma repetição.",
+  "aviso": "NORMATIVO. A execução evolui UM ÚNICO objeto de estado turno a turno (como o navegador faz em web/app.js): fase, frequência e obrigações pendentes atravessam os turnos. Uma falha aqui é regressão de sequência, mesmo quando cada turno isolado continuaria \"correto\" na sua própria pergunta.",
+  "comoUsar": "npm run test:dialogue (executa) | npm run validate:dialogue-matrix (valida schema, fontes no corpus e coerência com as regras documentais)",
+  "criteriosDeCotejamento": {
+    "fundamento": "MCA 100-16, Art. 12, III (itens de repetição obrigatória), Art. 45 (reforço) e Art. 39 (COTEJE / READ BACK).",
+    "obrigatorio": "Somente o que a autorização emite como INSTRUÇÃO (papel `instrucao` em phraseology.js). QNH que apenas informa o táxi, o circuito ou a partida VFR é informativo; vento e dados meteorológicos nunca são exigidos.",
+    "informativos": "Reportados pelo piloto, não cobrados de volta. Repeti-los com valor errado continua sendo divergência (Art. 12, § 1º).",
+    "classificacoes": ["correct", "incomplete", "contradictory"]
+  },
+  "roteiros": [
+    {
+      "id": "pt_vfr_local_ciclo_completo",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "fundamento": "Ciclo solo→decolagem→circuito→aproximação→pouso: MCA 100-16 arts. 125, 126, 129, 114, 132, com cotejamento pelos arts. 12/45.",
+      "turnos": [
+        { "piloto": "Solo Galeão, Papa Tango Alfa Bravo, posição pátio, solicito instruções de táxi", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Ciente pista 18, QNH 1015", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "solo", "frequencia": "solo", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Torre, PT-ABC pronto para partida", "espera": { "intent": "takeoff_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0126-001"], "fase": "decolagem", "frequencia": "torre" } },
+        { "piloto": "Ciente pista 18, decolagem autorizada", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "decolagem", "frequencia": "torre", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": [] } } },
+        { "piloto": "Torre, PT-ABC cinco milhas ao sul, solicito ingresso no circuito", "espera": { "intent": "traffic_circuit", "status": "documented", "fontes": ["MCA-100-16-artigo-0129-001"], "fase": "aproximacao", "frequencia": "torre" } },
+        { "piloto": "Ciente, ingresso no circuito pista 18", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "aproximacao", "frequencia": "torre", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Controle, PT-ABC solicito aproximação ILS", "espera": { "intent": "approach_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0114-001"], "fase": "aproximacao", "frequencia": "torre" } },
+        { "piloto": "Torre, PT-ABC na final, solicito pouso", "espera": { "intent": "landing_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0132-001"], "fase": "pouso", "frequencia": "torre" } }
+      ]
+    },
+    {
+      "id": "en_vfr_local_ciclo_completo",
+      "cenario": "vfr_local_en",
+      "idioma": "en",
+      "fundamento": "Mesmo ciclo em inglês. O ato de cotejar é documentado em inglês pelo art. 39 (glossário pt-en, COTEJE/READ BACK) e pelo art. 138 (\"your read back is correct\") — A3.14.",
+      "turnos": [
+        { "piloto": "Galeao Ground, Papa Tango Alpha Bravo, stand two, request taxi instructions", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "ground" } },
+        { "piloto": "Roger runway one eight, altimeter 1015", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "solo", "frequencia": "ground", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Tower, PT-ABC ready for departure", "espera": { "intent": "takeoff_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0126-001"], "fase": "decolagem", "frequencia": "torre" } },
+        { "piloto": "Roger runway one eight, cleared for take-off", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "decolagem", "frequencia": "torre", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": [] } } },
+        { "piloto": "Tower, PT-ABC five miles south, request to join traffic pattern", "espera": { "intent": "traffic_circuit", "status": "documented", "fontes": ["MCA-100-16-artigo-0129-001"], "fase": "aproximacao", "frequencia": "torre" } },
+        { "piloto": "Approach, PT-ABC request ILS approach", "espera": { "intent": "approach_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0114-001"], "fase": "aproximacao", "frequencia": "torre" } },
+        { "piloto": "Tower, PT-ABC final, request landing", "espera": { "intent": "landing_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0132-001"], "fase": "pouso", "frequencia": "torre" } }
+      ]
+    },
+    {
+      "id": "pt_ifr_partida_emergencia_com_fogo",
+      "cenario": "ifr_partida_pt",
+      "idioma": "pt",
+      "fundamento": "Emergência declarada no meio do voo (mudança de assunto fora do fluxo linear): art. 43 Tabela 15 (fogo a bordo / pane de motor), art. 64 (motor) e art. 66 (fogo e fumaça a bordo). A pergunta de esclarecimento usa CONFIRME (art. 39) + partes da aeronave (art. 43).",
+      "fundamentoEstado": "A3.17 (resolvido no F2): o pouso autorizado exige que o estado acompanhe a autorização (§11). Com a fase em `decolagem`, o estado dá o primeiro passo de um caminho válido (`decolagem -> aproximacao`, a mesma transição da autorização de aproximação) em vez de autorizar pousando com o estado ainda na decolagem.",
+      "turnos": [
+        { "piloto": "Solo Guarulhos, PR-IFR, posição gate, solicito instruções de táxi", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Ciente pista 10, QNH 1013", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "solo", "frequencia": "solo", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Torre, PR-IFR pronto para partida", "espera": { "intent": "takeoff_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0126-001"], "fase": "decolagem", "frequencia": "torre" } },
+        { "piloto": "Mayday, Mayday, Mayday, PR-IFR, falha de motor", "espera": { "intent": "emergency", "status": "documented", "fontes": ["MCA-100-16-artigo-0064-001"], "fase": "decolagem", "frequencia": "torre" } },
+        { "piloto": "Estamos com fogo aqui.", "espera": { "intent": "emergency", "status": "needs_clarification", "fontes": [], "fase": "decolagem", "frequencia": "torre", "perguntaPendente": "parte da aeronave" } },
+        { "piloto": "Fogo no motor direito.", "espera": { "intent": "emergency", "status": "documented", "fontes": ["MCA-100-16-artigo-0066-001", "MCA-100-16-artigo-0043-001"], "fase": "decolagem", "frequencia": "torre" } },
+        { "piloto": "PR-IFR na final, solicito pouso", "espera": { "intent": "landing_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0132-001"], "fase": "aproximacao", "frequencia": "torre" } }
+      ]
+    },
+    {
+      "id": "pt_vfr_esclarecimento_e_recuperacao",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "fundamento": "Informação do piloto ausente vira pergunta de estado (art. 39 CONFIRME + art. 122), comunicação incompatível não é tratada como solicitação nova e a recuperação retoma o fluxo. Pedido ambíguo é distinto de cobertura insuficiente (PLANO_REF §5/§9).",
+      "turnos": [
+        { "piloto": "PT-ABC pretende saída VFR", "espera": { "intent": "vfr_departure", "status": "needs_clarification", "fontes": [], "fase": "solo", "frequencia": "solo", "perguntaPendente": "destino ou setor" } },
+        { "piloto": "Uma cerveja e um cigarro.", "espera": { "intent": "unknown", "status": "needs_clarification", "fontes": [], "fase": "solo", "frequencia": "solo", "perguntaPendente": "destino ou setor" } },
+        { "piloto": "VFR saída para o setor norte", "espera": { "intent": "vfr_departure", "status": "documented", "fontes": ["MCA-100-16-artigo-0122-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Ciente saída VFR setor norte", "espera": { "intent": "readback", "status": "needs_clarification", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "solo", "frequencia": "solo", "cotejamento": { "classificacao": "incomplete", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Solicito táxi e pouso", "espera": { "intent": "ambiguous", "status": "not_understood", "fontes": [], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Solo, PT-ABC, solicito instruções de táxi", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "solo" } }
+      ]
+    },
+    {
+      "id": "pt_cotejamento_divergente_e_recuperacao",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "fundamento": "Art. 12, § 1º: cotejamento incorreto recebe \"negativo\" seguido da versão correta e a obrigação continua pendente até a repetição correta.",
+      "turnos": [
+        { "piloto": "Solo Galeão, PT-ABC, solicito instruções de táxi", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Ciente pista 20", "espera": { "intent": "readback", "status": "needs_clarification", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "solo", "frequencia": "solo", "cotejamento": { "classificacao": "contradictory", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Ciente pista 18", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "solo", "frequencia": "solo", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": ["qnh"] } } },
+        { "piloto": "Torre, PT-ABC pronto para partida", "espera": { "intent": "takeoff_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0126-001"], "fase": "decolagem", "frequencia": "torre" } },
+        { "piloto": "Ciente pista 18, decolagem autorizada", "espera": { "intent": "readback", "status": "documented", "fontes": ["MCA-100-16-artigo-0012-001"], "fase": "decolagem", "frequencia": "torre", "cotejamento": { "classificacao": "correct", "obrigatorios": ["pista"], "informativos": [] } } },
+        { "piloto": "Torre, PT-ABC cinco milhas ao sul, solicito ingresso no circuito", "espera": { "intent": "traffic_circuit", "status": "documented", "fontes": ["MCA-100-16-artigo-0129-001"], "fase": "aproximacao", "frequencia": "torre" } }
+      ]
+    },
+    {
+      "id": "pt_frequencia_troca_e_assignment",
+      "cenario": "ifr_partida_pt",
+      "idioma": "pt",
+      "fundamento": "Art. 59 (mudança de frequência aprovada). A autorização não carrega nenhum item do art. 12, III, logo não há o que cotejar: repeti-la segue o caminho normal da sua intenção. A frequência de transferência não configurada no cenário é dado de sessão ausente, não pergunta ao piloto (§9).",
+      "divergencia": "O eco \"Ciente, frequência 123,45\" empata o léxico de frequência com o de cotejamento e cai em `ambiguous` — a obrigação do art. 12, III depende de item cotejável que o art. 59 não fornece.",
+      "turnos": [
+        { "piloto": "Controle Brasília, PR-IFR, solicito mudança de frequência", "espera": { "intent": "frequency_change", "status": "documented", "fontes": ["MCA-100-16-artigo-0059-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Ciente, mudança de frequência aprovada", "espera": { "intent": "frequency_change", "status": "documented", "fontes": ["MCA-100-16-artigo-0059-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Solicito a frequência de transferência", "espera": { "intent": "frequency_change", "status": "session_context_missing", "fontes": [], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Controle Brasília, PR-IFR, solicito troca para frequência 123,45", "espera": { "intent": "frequency_change", "status": "documented", "fontes": ["MCA-100-16-artigo-0059-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Ciente, frequência 123,45", "espera": { "intent": "ambiguous", "status": "not_understood", "fontes": [], "fase": "solo", "frequencia": "solo" } }
+      ]
+    },
+    {
+      "id": "pt_sem_cobertura_e_dado_externo",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "fundamento": "Fonte externa não integrada é dita como tal, sem acusar o corpus; intenção não compreendida é distinta de cobertura insuficiente; a sessão se recupera depois (art. 125).",
+      "turnos": [
+        { "piloto": "Solicito meteorologia detalhada", "espera": { "intent": "weather_request", "status": "external_source_unavailable", "fontes": [], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Qual o tempo em Recife?", "espera": { "intent": "unknown", "status": "not_understood", "fontes": [], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Xenobiologia quântica marciana", "espera": { "intent": "unknown", "status": "not_understood", "fontes": [], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Solo, PT-ABC posição pátio, solicito instruções de táxi", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "solo" } }
+      ]
+    },
+    {
+      "id": "pt_progressao_de_fase_reportando_posicao",
+      "cenario": "vfr_local_pt",
+      "idioma": "pt",
+      "fundamento": "Reportagem de posição é reconhecida como tal (art. 39 REPORTE, família position_reporting) e não confundida com pedido de táxi só porque a frase contém \"posição\".",
+      "turnos": [
+        { "piloto": "Solo Galeão, PT-ABC, reportando posição dez milhas ao sul", "espera": { "intent": "position_report", "status": "documented", "fontes": ["MCA-100-16-artigo-0039-001"], "fase": "solo", "frequencia": "solo" } },
+        { "piloto": "Solo, PT-ABC, solicito instruções de táxi", "espera": { "intent": "taxi_request", "status": "documented", "fontes": ["MCA-100-16-artigo-0125-001"], "fase": "solo", "frequencia": "solo" } }
+      ]
+    }
+  ]
+}

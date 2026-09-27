@@ -21,8 +21,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0125-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -33,12 +32,34 @@
             "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 2,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 149
+            "caracteres": 177
           }
         },
         {
@@ -54,16 +75,18 @@
           "sourceIds": [
             "MCA-100-16-artigo-0012-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "pista",
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [
+              "pista"
+            ],
+            "informativos": [
               "qnh"
             ],
-            "omitidos": [],
             "score": 100
           },
-          "cotejamentoSemantico": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -71,15 +94,37 @@
           "posicao": "pátio",
           "contexto": {
             "ultima_intencao": "readback",
-            "ultima_autorizacao": "PT-ABC, cotejamento correto.",
-            "ultima_instrucao_controlador": "PT-ABC, cotejamento correto.",
+            "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "cotejamento_pendente": false,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+              "cotejada": true,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 603
+            "caracteres": 793
           }
         },
         {
@@ -95,13 +140,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0126-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
@@ -112,13 +151,31 @@
             "ultima_autorizacao": "PT-ABC, pista 18, decolagem autorizada.",
             "ultima_instrucao_controlador": "PT-ABC, pista 18, decolagem autorizada.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "takeoff_request",
+              "fonteId": "MCA-100-16-artigo-0126-001",
+              "citation": null,
+              "text": "PT-ABC, pista 18, decolagem autorizada.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
           "historico": 6,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 442
+            "recentes": 4,
+            "caracteres": 900
           }
         },
         {
@@ -134,15 +191,16 @@
           "sourceIds": [
             "MCA-100-16-artigo-0012-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [
               "pista"
             ],
-            "omitidos": [],
+            "informativos": [],
             "score": 100
           },
-          "cotejamentoSemantico": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
@@ -150,16 +208,34 @@
           "posicao": "pátio",
           "contexto": {
             "ultima_intencao": "readback",
-            "ultima_autorizacao": "PT-ABC, cotejamento correto.",
-            "ultima_instrucao_controlador": "PT-ABC, cotejamento correto.",
+            "ultima_autorizacao": "PT-ABC, pista 18, decolagem autorizada.",
+            "ultima_instrucao_controlador": "PT-ABC, pista 18, decolagem autorizada.",
             "cotejamento_pendente": false,
+            "autorizacao_pendente": {
+              "intent": "takeoff_request",
+              "fonteId": "MCA-100-16-artigo-0126-001",
+              "citation": null,
+              "text": "PT-ABC, pista 18, decolagem autorizada.",
+              "cotejada": true,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
           "historico": 8,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 528
+            "recentes": 6,
+            "caracteres": 1001
           }
         },
         {
@@ -175,13 +251,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0129-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "aproximacao",
@@ -192,55 +262,101 @@
             "ultima_autorizacao": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "traffic_circuit",
+              "fonteId": "MCA-100-16-artigo-0129-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
           "historico": 10,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 493
+            "recentes": 8,
+            "caracteres": 1117
           }
         },
         {
           "turno": 6,
           "piloto": "Ciente, ingresso no circuito pista 18",
           "normalizado": "Ciente, ingresso no circuito pista 18",
-          "intent": "ambiguous",
+          "intent": "readback",
           "confidence": 0.49,
-          "status": "not_understood",
-          "reason": "intent-not-understood",
-          "covered": false,
-          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
-          "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-ABC, cotejamento correto.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [
+              "pista"
+            ],
+            "informativos": [
               "qnh"
             ],
-            "omitidos": [
-              "qnh"
-            ],
-            "score": 50
+            "score": 100
           },
-          "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "aproximacao",
           "frequencia": "torre",
           "posicao": "pátio",
           "contexto": {
-            "ultima_intencao": "traffic_circuit",
+            "ultima_intencao": "readback",
             "ultima_autorizacao": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
-            "cotejamento_pendente": true,
+            "cotejamento_pendente": false,
+            "autorizacao_pendente": {
+              "intent": "traffic_circuit",
+              "fonteId": "MCA-100-16-artigo-0129-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado ingresso no circuito de tráfego da pista 18, QNH 1015.",
+              "cotejada": true,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
-          "historico": 11,
+          "historico": 12,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 663
+            "recentes": 10,
+            "caracteres": 1407
           }
         },
         {
@@ -256,19 +372,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0114-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "qnh"
-            ],
-            "omitidos": [
-              "pista",
-              "qnh"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "aproximacao",
@@ -279,13 +383,31 @@
             "ultima_autorizacao": "PT-ABC, autorizado aproximação pista 18.",
             "ultima_instrucao_controlador": "PT-ABC, autorizado aproximação pista 18.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "approach_request",
+              "fonteId": "MCA-100-16-artigo-0114-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado aproximação pista 18.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
-          "historico": 13,
+          "historico": 14,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 636
+            "recentes": 12,
+            "caracteres": 1523
           }
         },
         {
@@ -301,17 +423,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0132-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista"
-            ],
-            "omitidos": [
-              "pista"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "pouso",
@@ -322,24 +434,39 @@
             "ultima_autorizacao": "PT-ABC, pista 18, pouso autorizado.",
             "ultima_instrucao_controlador": "PT-ABC, pista 18, pouso autorizado.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "landing_request",
+              "fonteId": "MCA-100-16-artigo-0132-001",
+              "citation": null,
+              "text": "PT-ABC, pista 18, pouso autorizado.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
-          "historico": 15,
+          "historico": 16,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 542
+            "recentes": 14,
+            "caracteres": 1587
           }
         }
       ],
       "relatorio": {
-        "transmissoes": 15,
-        "avaliacoes": 7,
-        "score": 64,
-        "erros_recorrentes": {
-          "qnh": 2,
-          "pista": 2
-        }
+        "transmissoes": 16,
+        "avaliacoes": 3,
+        "score": 100,
+        "erros_recorrentes": {}
       }
     },
     {
@@ -360,8 +487,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0125-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -372,12 +498,34 @@
             "ultima_autorizacao": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 2,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 153
+            "caracteres": 181
           }
         },
         {
@@ -389,20 +537,22 @@
           "status": "documented",
           "reason": "grounded",
           "covered": true,
-          "spokenText": "PT-ABC, readback correct.",
+          "spokenText": "PT-ABC, your read back is correct.",
           "sourceIds": [
             "MCA-100-16-artigo-0012-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "pista",
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [
+              "pista"
+            ],
+            "informativos": [
               "qnh"
             ],
-            "omitidos": [],
             "score": 100
           },
-          "cotejamentoSemantico": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -410,15 +560,37 @@
           "posicao": "two",
           "contexto": {
             "ultima_intencao": "readback",
-            "ultima_autorizacao": "PT-ABC, readback correct.",
-            "ultima_instrucao_controlador": "PT-ABC, readback correct.",
+            "ultima_autorizacao": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+            "ultima_instrucao_controlador": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
             "cotejamento_pendente": false,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PT-ABC, taxi to holding point runway 18, QNH 1015.",
+              "cotejada": true,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 544
+            "caracteres": 734
           }
         },
         {
@@ -434,13 +606,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0126-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
@@ -451,12 +617,30 @@
             "ultima_autorizacao": "PT-ABC, runway 18, cleared for take-off.",
             "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared for take-off.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "takeoff_request",
+              "fonteId": "MCA-100-16-artigo-0126-001",
+              "citation": null,
+              "text": "PT-ABC, runway 18, cleared for take-off.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 6,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 441
+            "recentes": 4,
+            "caracteres": 853
           }
         },
         {
@@ -468,19 +652,20 @@
           "status": "documented",
           "reason": "grounded",
           "covered": true,
-          "spokenText": "PT-ABC, readback correct.",
+          "spokenText": "PT-ABC, your read back is correct.",
           "sourceIds": [
             "MCA-100-16-artigo-0012-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [
               "pista"
             ],
-            "omitidos": [],
+            "informativos": [],
             "score": 100
           },
-          "cotejamentoSemantico": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
@@ -488,15 +673,33 @@
           "posicao": "two",
           "contexto": {
             "ultima_intencao": "readback",
-            "ultima_autorizacao": "PT-ABC, readback correct.",
-            "ultima_instrucao_controlador": "PT-ABC, readback correct.",
+            "ultima_autorizacao": "PT-ABC, runway 18, cleared for take-off.",
+            "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared for take-off.",
             "cotejamento_pendente": false,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "takeoff_request",
+              "fonteId": "MCA-100-16-artigo-0126-001",
+              "citation": null,
+              "text": "PT-ABC, runway 18, cleared for take-off.",
+              "cotejada": true,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 8,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 497
+            "recentes": 6,
+            "caracteres": 959
           }
         },
         {
@@ -512,13 +715,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0129-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "aproximacao",
@@ -529,13 +726,35 @@
             "ultima_autorizacao": "PT-ABC, cleared to join the traffic pattern runway 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, cleared to join the traffic pattern runway 18, QNH 1015.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "traffic_circuit",
+              "fonteId": "MCA-100-16-artigo-0129-001",
+              "citation": null,
+              "text": "PT-ABC, cleared to join the traffic pattern runway 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "join"
           },
           "historico": 10,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 450
+            "recentes": 8,
+            "caracteres": 1081
           }
         },
         {
@@ -551,19 +770,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0114-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "qnh"
-            ],
-            "omitidos": [
-              "pista",
-              "qnh"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "aproximacao",
@@ -574,13 +781,31 @@
             "ultima_autorizacao": "PT-ABC, cleared approach runway 18.",
             "ultima_instrucao_controlador": "PT-ABC, cleared approach runway 18.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "approach_request",
+              "fonteId": "MCA-100-16-artigo-0114-001",
+              "citation": null,
+              "text": "PT-ABC, cleared approach runway 18.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "join"
           },
           "historico": 12,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 630
+            "recentes": 10,
+            "caracteres": 1370
           }
         },
         {
@@ -596,19 +821,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0132-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "proa"
-            ],
-            "omitidos": [
-              "pista",
-              "proa"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "pouso",
@@ -619,25 +832,39 @@
             "ultima_autorizacao": "PT-ABC, runway 18, cleared to land.",
             "ultima_instrucao_controlador": "PT-ABC, runway 18, cleared to land.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "landing_request",
+              "fonteId": "MCA-100-16-artigo-0132-001",
+              "citation": null,
+              "text": "PT-ABC, runway 18, cleared to land.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18"
+              },
+              "expected": {
+                "pista": "18"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "join"
           },
           "historico": 14,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 518
+            "recentes": 12,
+            "caracteres": 1426
           }
         }
       ],
       "relatorio": {
         "transmissoes": 14,
-        "avaliacoes": 6,
-        "score": 67,
-        "erros_recorrentes": {
-          "pista": 2,
-          "qnh": 1,
-          "proa": 1
-        }
+        "avaliacoes": 2,
+        "score": 100,
+        "erros_recorrentes": {}
       }
     },
     {
@@ -658,8 +885,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0125-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -671,12 +897,34 @@
             "ultima_autorizacao": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
             "ultima_instrucao_controlador": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
+              "cotejada": false,
+              "campos": {
+                "pista": "10",
+                "qnh": "1013"
+              },
+              "expected": {
+                "pista": "10",
+                "qnh": "1013"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 2,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 148
+            "caracteres": 176
           }
         },
         {
@@ -692,16 +940,18 @@
           "sourceIds": [
             "MCA-100-16-artigo-0012-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "pista",
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [
+              "pista"
+            ],
+            "informativos": [
               "qnh"
             ],
-            "omitidos": [],
             "score": 100
           },
-          "cotejamentoSemantico": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -710,15 +960,37 @@
           "contexto": {
             "regras_voo": "IFR",
             "ultima_intencao": "readback",
-            "ultima_autorizacao": "PR-IFR, cotejamento correto.",
-            "ultima_instrucao_controlador": "PR-IFR, cotejamento correto.",
+            "ultima_autorizacao": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
+            "ultima_instrucao_controlador": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
             "cotejamento_pendente": false,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PR-IFR, autorizado táxi para o ponto de espera da pista 10, QNH 1013.",
+              "cotejada": true,
+              "campos": {
+                "pista": "10",
+                "qnh": "1013"
+              },
+              "expected": {
+                "pista": "10",
+                "qnh": "1013"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 627
+            "caracteres": 817
           }
         },
         {
@@ -734,13 +1006,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0126-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
@@ -752,13 +1018,31 @@
             "ultima_autorizacao": "PR-IFR, pista 10, decolagem autorizada.",
             "ultima_instrucao_controlador": "PR-IFR, pista 10, decolagem autorizada.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "takeoff_request",
+              "fonteId": "MCA-100-16-artigo-0126-001",
+              "citation": null,
+              "text": "PR-IFR, pista 10, decolagem autorizada.",
+              "cotejada": false,
+              "campos": {
+                "pista": "10"
+              },
+              "expected": {
+                "pista": "10"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
           "historico": 6,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 461
+            "recentes": 4,
+            "caracteres": 924
           }
         },
         {
@@ -774,17 +1058,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0064-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista"
-            ],
-            "omitidos": [
-              "pista"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
@@ -796,40 +1070,47 @@
             "ultima_autorizacao": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
             "ultima_instrucao_controlador": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "emergency",
+              "fonteId": "MCA-100-16-artigo-0064-001",
+              "citation": null,
+              "text": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+              "cotejada": false,
+              "campos": {
+                "pista": "10"
+              },
+              "expected": {
+                "pista": "10",
+                "reporte": "posição"
+              },
+              "obrigatorios": [],
+              "informativos": [
+                "pista"
+              ]
+            },
             "emergencia_ativa": true,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
           "historico": 8,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 547
+            "recentes": 6,
+            "caracteres": 1025
           }
         },
         {
           "turno": 5,
           "piloto": "Estamos com fogo aqui.",
           "normalizado": "Estamos com fogo aqui.",
-          "intent": "unknown",
-          "confidence": 0,
-          "status": "not_understood",
-          "reason": "intent-not-understood",
+          "intent": "emergency",
+          "confidence": 1,
+          "status": "needs_clarification",
+          "reason": "missing-pilot-information",
           "covered": false,
-          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
+          "spokenText": "PR-IFR, confirme em que parte da aeronave está o fogo: porão, toalete, trem de pouso ou motor.",
           "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "nível"
-            ],
-            "omitidos": [
-              "pista",
-              "nível"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "cotejamento": null,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
           "frequencia": "torre",
@@ -840,40 +1121,50 @@
             "ultima_autorizacao": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
             "ultima_instrucao_controlador": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "emergency",
+              "fonteId": "MCA-100-16-artigo-0064-001",
+              "citation": null,
+              "text": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+              "cotejada": false,
+              "campos": {
+                "pista": "10"
+              },
+              "expected": {
+                "pista": "10",
+                "reporte": "posição"
+              },
+              "obrigatorios": [],
+              "informativos": [
+                "pista"
+              ]
+            },
             "emergencia_ativa": true,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
           "historico": 9,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 616
+            "recentes": 8,
+            "caracteres": 1218
           }
         },
         {
           "turno": 6,
           "piloto": "Fogo no motor direito.",
           "normalizado": "Fogo no motor direito.",
-          "intent": "unknown",
-          "confidence": 0,
-          "status": "not_understood",
-          "reason": "intent-not-understood",
-          "covered": false,
-          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
-          "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "nível"
-            ],
-            "omitidos": [
-              "pista",
-              "nível"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "intent": "emergency",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PR-IFR, ciente, fogo a bordo, pista 10 disponível, reporte posição.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0066-001",
+            "MCA-100-16-artigo-0043-001"
+          ],
+          "cotejamento": null,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "decolagem",
           "frequencia": "torre",
@@ -881,16 +1172,35 @@
           "contexto": {
             "regras_voo": "IFR",
             "ultima_intencao": "emergency",
-            "ultima_autorizacao": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
-            "ultima_instrucao_controlador": "PR-IFR, ciente Mayday, pista 10 disponível, reporte posição.",
+            "ultima_autorizacao": "PR-IFR, ciente, fogo a bordo, pista 10 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PR-IFR, ciente, fogo a bordo, pista 10 disponível, reporte posição.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "emergency",
+              "fonteId": "MCA-100-16-artigo-0066-001",
+              "citation": null,
+              "text": "PR-IFR, ciente, fogo a bordo, pista 10 disponível, reporte posição.",
+              "cotejada": false,
+              "campos": {
+                "pista": "10"
+              },
+              "expected": {
+                "pista": "10",
+                "reporte": "posição"
+              },
+              "obrigatorios": [],
+              "informativos": [
+                "pista"
+              ]
+            },
             "emergencia_ativa": true,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
-          "historico": 10,
+          "historico": 11,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 592
+            "recentes": 9,
+            "caracteres": 1270
           }
         },
         {
@@ -906,22 +1216,10 @@
           "sourceIds": [
             "MCA-100-16-artigo-0132-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "nível"
-            ],
-            "omitidos": [
-              "pista",
-              "nível"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
-          "fase": "decolagem",
+          "fase": "aproximacao",
           "frequencia": "torre",
           "posicao": "gate",
           "contexto": {
@@ -930,24 +1228,39 @@
             "ultima_autorizacao": "PR-IFR, pista 10, pouso autorizado.",
             "ultima_instrucao_controlador": "PR-IFR, pista 10, pouso autorizado.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "landing_request",
+              "fonteId": "MCA-100-16-artigo-0132-001",
+              "citation": null,
+              "text": "PR-IFR, pista 10, pouso autorizado.",
+              "cotejada": false,
+              "campos": {
+                "pista": "10"
+              },
+              "expected": {
+                "pista": "10"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
             "emergencia_ativa": true,
+            "pergunta_pendente": null,
             "destino": "partida"
           },
-          "historico": 12,
+          "historico": 13,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 556
+            "recentes": 11,
+            "caracteres": 1431
           }
         }
       ],
       "relatorio": {
-        "transmissoes": 12,
-        "avaliacoes": 6,
-        "score": 33,
-        "erros_recorrentes": {
-          "pista": 4,
-          "nível": 3
-        }
+        "transmissoes": 13,
+        "avaliacoes": 1,
+        "score": 100,
+        "erros_recorrentes": {}
       }
     },
     {
@@ -962,13 +1275,12 @@
           "intent": "vfr_departure",
           "confidence": 1,
           "status": "needs_clarification",
-          "reason": "missing:destino ou setor",
+          "reason": "missing-pilot-information",
           "covered": false,
-          "spokenText": "Confirme destino ou setor.",
+          "spokenText": "PT-ABC, confirme o destino ou setor desejado.",
           "sourceIds": [],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "cotejamento": null,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
           "frequencia": "solo",
@@ -977,7 +1289,7 @@
           "historico": 1,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 149
+            "caracteres": 177
           }
         },
         {
@@ -991,8 +1303,7 @@
           "covered": false,
           "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
           "sourceIds": [],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1002,7 +1313,7 @@
           "historico": 2,
           "sessaoContexto": {
             "recentes": 1,
-            "caracteres": 203
+            "caracteres": 231
           }
         },
         {
@@ -1018,8 +1329,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0122-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1032,41 +1342,65 @@
             "ultima_autorizacao": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "vfr_departure",
+              "fonteId": "MCA-100-16-artigo-0122-001",
+              "citation": null,
+              "text": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015",
+                "destino": "norte"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 258
+            "caracteres": 286
           }
         },
         {
           "turno": 4,
           "piloto": "Ciente saída VFR setor norte",
           "normalizado": "Ciente saída VFR setor norte",
-          "intent": "vfr_departure",
+          "intent": "readback",
           "confidence": 1,
-          "status": "documented",
-          "reason": "grounded",
+          "status": "needs_clarification",
+          "reason": "readback:incomplete",
           "covered": true,
-          "spokenText": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+          "spokenText": "PT-ABC, negativo, pista 18.",
           "sourceIds": [
-            "MCA-100-16-artigo-0122-001"
+            "MCA-100-16-artigo-0012-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "qnh"
+          "cotejamento": {
+            "classification": "incomplete",
+            "missing": [
+              "pista"
             ],
-            "omitidos": [
-              "pista",
+            "contradictory": [],
+            "obrigatorios": [
+              "pista"
+            ],
+            "informativos": [
               "qnh"
             ],
             "score": 0
           },
-          "cotejamentoSemantico": null,
-          "estadoAplicado": true,
+          "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
           "frequencia": "solo",
@@ -1078,12 +1412,35 @@
             "ultima_autorizacao": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "vfr_departure",
+              "fonteId": "MCA-100-16-artigo-0122-001",
+              "citation": null,
+              "text": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015",
+                "destino": "norte"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 6,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 562
+            "recentes": 4,
+            "caracteres": 863
           }
         },
         {
@@ -1097,19 +1454,7 @@
           "covered": false,
           "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
           "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "qnh"
-            ],
-            "omitidos": [
-              "pista",
-              "qnh"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1122,12 +1467,35 @@
             "ultima_autorizacao": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "vfr_departure",
+              "fonteId": "MCA-100-16-artigo-0122-001",
+              "citation": null,
+              "text": "PT-ABC, saída VFR para norte, pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015",
+                "destino": "norte"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 7,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 562
+            "recentes": 6,
+            "caracteres": 976
           }
         },
         {
@@ -1143,19 +1511,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0125-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "qnh"
-            ],
-            "omitidos": [
-              "pista",
-              "qnh"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1168,22 +1524,43 @@
             "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 9,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 555
+            "recentes": 7,
+            "caracteres": 1027
           }
         }
       ],
       "relatorio": {
         "transmissoes": 9,
-        "avaliacoes": 3,
+        "avaliacoes": 1,
         "score": 0,
         "erros_recorrentes": {
-          "pista": 3,
-          "qnh": 3
+          "pista": 1
         }
       }
     },
@@ -1205,8 +1582,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0059-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1218,12 +1594,24 @@
             "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
             "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "frequency_change",
+              "fonteId": "MCA-100-16-artigo-0059-001",
+              "citation": null,
+              "text": "PR-IFR, mudança de frequência aprovada.",
+              "cotejada": false,
+              "campos": {},
+              "expected": {},
+              "obrigatorios": [],
+              "informativos": []
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 2,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 148
+            "caracteres": 176
           }
         },
         {
@@ -1239,15 +1627,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0059-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "frequência"
-            ],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1259,12 +1639,24 @@
             "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
             "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "frequency_change",
+              "fonteId": "MCA-100-16-artigo-0059-001",
+              "citation": null,
+              "text": "PR-IFR, mudança de frequência aprovada.",
+              "cotejada": false,
+              "campos": {},
+              "expected": {},
+              "obrigatorios": [],
+              "informativos": []
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 533
+            "caracteres": 690
           }
         },
         {
@@ -1273,20 +1665,12 @@
           "normalizado": "Solicito a frequência de transferência",
           "intent": "frequency_change",
           "confidence": 1,
-          "status": "operational_context_missing",
+          "status": "session_context_missing",
           "reason": "controller-frequency-not-configured",
           "covered": false,
           "spokenText": "A frequência de transferência não está configurada para este cenário; mantenha esta frequência.",
           "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "frequência"
-            ],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1298,12 +1682,24 @@
             "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
             "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "frequency_change",
+              "fonteId": "MCA-100-16-artigo-0059-001",
+              "citation": null,
+              "text": "PR-IFR, mudança de frequência aprovada.",
+              "cotejada": false,
+              "campos": {},
+              "expected": {},
+              "obrigatorios": [],
+              "informativos": []
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 5,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 514
+            "recentes": 4,
+            "caracteres": 825
           }
         },
         {
@@ -1319,15 +1715,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0059-001"
           ],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "frequência"
-            ],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1339,13 +1727,25 @@
             "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
             "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "frequency_change",
+              "fonteId": "MCA-100-16-artigo-0059-001",
+              "citation": null,
+              "text": "PR-IFR, mudança de frequência aprovada.",
+              "cotejada": false,
+              "campos": {},
+              "expected": {},
+              "obrigatorios": [],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "frequência"
           },
           "historico": 7,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 514
+            "recentes": 5,
+            "caracteres": 893
           }
         },
         {
@@ -1359,15 +1759,7 @@
           "covered": false,
           "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
           "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "frequência"
-            ],
-            "omitidos": [],
-            "score": 100
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1379,19 +1771,31 @@
             "ultima_autorizacao": "PR-IFR, mudança de frequência aprovada.",
             "ultima_instrucao_controlador": "PR-IFR, mudança de frequência aprovada.",
             "cotejamento_pendente": true,
+            "autorizacao_pendente": {
+              "intent": "frequency_change",
+              "fonteId": "MCA-100-16-artigo-0059-001",
+              "citation": null,
+              "text": "PR-IFR, mudança de frequência aprovada.",
+              "cotejada": false,
+              "campos": {},
+              "expected": {},
+              "obrigatorios": [],
+              "informativos": []
+            },
             "emergencia_ativa": false,
+            "pergunta_pendente": null,
             "destino": "frequência"
           },
           "historico": 8,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 575
+            "recentes": 7,
+            "caracteres": 1089
           }
         }
       ],
       "relatorio": {
         "transmissoes": 8,
-        "avaliacoes": 4,
+        "avaliacoes": 0,
         "score": 100,
         "erros_recorrentes": {}
       }
@@ -1407,13 +1811,12 @@
           "normalizado": "Solicito meteorologia detalhada",
           "intent": "weather_request",
           "confidence": 1,
-          "status": "unsupported",
-          "reason": "relevant-evidence-not-retrieved",
+          "status": "external_source_unavailable",
+          "reason": "external-source-not-integrated",
           "covered": false,
-          "spokenText": "Não há cobertura documental para essa solicitação.",
+          "spokenText": "Essa informação depende de fonte externa (METAR ou serviço meteorológico) que ainda não está integrada; não vou improvisar o dado.",
           "sourceIds": [],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1423,7 +1826,7 @@
           "historico": 1,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 149
+            "caracteres": 177
           }
         },
         {
@@ -1437,8 +1840,7 @@
           "covered": false,
           "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
           "sourceIds": [],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1448,7 +1850,7 @@
           "historico": 2,
           "sessaoContexto": {
             "recentes": 1,
-            "caracteres": 209
+            "caracteres": 237
           }
         },
         {
@@ -1462,8 +1864,7 @@
           "covered": false,
           "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
           "sourceIds": [],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": false,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1473,7 +1874,7 @@
           "historico": 3,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 262
+            "caracteres": 290
           }
         },
         {
@@ -1489,8 +1890,7 @@
           "sourceIds": [
             "MCA-100-16-artigo-0125-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
           "fase": "solo",
@@ -1501,12 +1901,34 @@
             "ultima_autorizacao": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "ultima_instrucao_controlador": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "taxi_request",
+              "fonteId": "MCA-100-16-artigo-0125-001",
+              "citation": null,
+              "text": "PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.",
+              "cotejada": false,
+              "campos": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "expected": {
+                "pista": "18",
+                "qnh": "1015"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": [
+                "qnh"
+              ]
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 5,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 261
+            "recentes": 3,
+            "caracteres": 350
           }
         }
       ],
@@ -1535,24 +1957,41 @@
           "sourceIds": [
             "MCA-100-16-artigo-0132-001"
           ],
-          "cotejamentoLegado": null,
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
-          "fase": "rota",
-          "frequencia": "controle",
+          "fase": "aproximacao",
+          "frequencia": "torre",
           "posicao": "20 NM sul",
           "contexto": {
             "ultima_intencao": "landing_request",
             "ultima_autorizacao": "PT-EMG, pista 15, pouso autorizado.",
             "ultima_instrucao_controlador": "PT-EMG, pista 15, pouso autorizado.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": false
+            "autorizacao_pendente": {
+              "intent": "landing_request",
+              "fonteId": "MCA-100-16-artigo-0132-001",
+              "citation": null,
+              "text": "PT-EMG, pista 15, pouso autorizado.",
+              "cotejada": false,
+              "campos": {
+                "pista": "15"
+              },
+              "expected": {
+                "pista": "15"
+              },
+              "obrigatorios": [
+                "pista"
+              ],
+              "informativos": []
+            },
+            "emergencia_ativa": false,
+            "pergunta_pendente": null
           },
           "historico": 2,
           "sessaoContexto": {
             "recentes": 0,
-            "caracteres": 161
+            "caracteres": 189
           }
         },
         {
@@ -1568,125 +2007,162 @@
           "sourceIds": [
             "MCA-100-16-artigo-0064-001"
           ],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista"
-            ],
-            "omitidos": [
-              "pista"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
+          "cotejamento": null,
           "estadoAplicado": true,
           "erroAplicacaoEstado": null,
-          "fase": "rota",
-          "frequencia": "controle",
+          "fase": "aproximacao",
+          "frequencia": "torre",
           "posicao": "20 NM sul",
           "contexto": {
             "ultima_intencao": "emergency",
             "ultima_autorizacao": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
             "ultima_instrucao_controlador": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": true
+            "autorizacao_pendente": {
+              "intent": "emergency",
+              "fonteId": "MCA-100-16-artigo-0064-001",
+              "citation": null,
+              "text": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+              "cotejada": false,
+              "campos": {
+                "pista": "15"
+              },
+              "expected": {
+                "pista": "15",
+                "reporte": "posição"
+              },
+              "obrigatorios": [],
+              "informativos": [
+                "pista"
+              ]
+            },
+            "emergencia_ativa": true,
+            "pergunta_pendente": null
           },
           "historico": 4,
           "sessaoContexto": {
             "recentes": 2,
-            "caracteres": 509
+            "caracteres": 685
           }
         },
         {
           "turno": 3,
           "piloto": "Ciente Mayday, pista 15 disponível, reporte posição",
           "normalizado": "Ciente Mayday, pista 15 disponível, reporte posição",
-          "intent": "ambiguous",
+          "intent": "readback",
           "confidence": 0.49,
-          "status": "not_understood",
-          "reason": "intent-not-understood",
-          "covered": false,
-          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
-          "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": true,
-            "itens_esperados": [
-              "pista",
-              "nível"
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-EMG, cotejamento correto.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0012-001"
+          ],
+          "cotejamento": {
+            "classification": "correct",
+            "missing": [],
+            "contradictory": [],
+            "obrigatorios": [],
+            "informativos": [
+              "pista"
             ],
-            "omitidos": [],
             "score": 100
           },
-          "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
-          "fase": "rota",
-          "frequencia": "controle",
+          "fase": "aproximacao",
+          "frequencia": "torre",
           "posicao": "20 NM sul",
           "contexto": {
-            "ultima_intencao": "emergency",
+            "ultima_intencao": "readback",
             "ultima_autorizacao": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
             "ultima_instrucao_controlador": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
-            "cotejamento_pendente": true,
-            "emergencia_ativa": true
+            "cotejamento_pendente": false,
+            "autorizacao_pendente": {
+              "intent": "emergency",
+              "fonteId": "MCA-100-16-artigo-0064-001",
+              "citation": null,
+              "text": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+              "cotejada": true,
+              "campos": {
+                "pista": "15"
+              },
+              "expected": {
+                "pista": "15",
+                "reporte": "posição"
+              },
+              "obrigatorios": [],
+              "informativos": [
+                "pista"
+              ]
+            },
+            "emergencia_ativa": true,
+            "pergunta_pendente": null
           },
-          "historico": 5,
+          "historico": 6,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 554
+            "recentes": 4,
+            "caracteres": 870
           }
         },
         {
           "turno": 4,
           "piloto": "Fogo no motor direito.",
           "normalizado": "Fogo no motor direito.",
-          "intent": "unknown",
-          "confidence": 0,
-          "status": "not_understood",
-          "reason": "intent-not-understood",
-          "covered": false,
-          "spokenText": "Não entendi sua solicitação operacional. Informe suas intenções.",
-          "sourceIds": [],
-          "cotejamentoLegado": {
-            "correto": false,
-            "itens_esperados": [
-              "pista",
-              "nível"
-            ],
-            "omitidos": [
-              "pista",
-              "nível"
-            ],
-            "score": 0
-          },
-          "cotejamentoSemantico": null,
-          "estadoAplicado": false,
+          "intent": "emergency",
+          "confidence": 1,
+          "status": "documented",
+          "reason": "grounded",
+          "covered": true,
+          "spokenText": "PT-EMG, ciente, fogo a bordo, pista 15 disponível, reporte posição.",
+          "sourceIds": [
+            "MCA-100-16-artigo-0066-001",
+            "MCA-100-16-artigo-0043-001"
+          ],
+          "cotejamento": null,
+          "estadoAplicado": true,
           "erroAplicacaoEstado": null,
-          "fase": "rota",
-          "frequencia": "controle",
+          "fase": "aproximacao",
+          "frequencia": "torre",
           "posicao": "20 NM sul",
           "contexto": {
             "ultima_intencao": "emergency",
-            "ultima_autorizacao": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
-            "ultima_instrucao_controlador": "PT-EMG, ciente Mayday, pista 15 disponível, reporte posição.",
+            "ultima_autorizacao": "PT-EMG, ciente, fogo a bordo, pista 15 disponível, reporte posição.",
+            "ultima_instrucao_controlador": "PT-EMG, ciente, fogo a bordo, pista 15 disponível, reporte posição.",
             "cotejamento_pendente": true,
-            "emergencia_ativa": true
+            "autorizacao_pendente": {
+              "intent": "emergency",
+              "fonteId": "MCA-100-16-artigo-0066-001",
+              "citation": null,
+              "text": "PT-EMG, ciente, fogo a bordo, pista 15 disponível, reporte posição.",
+              "cotejada": false,
+              "campos": {
+                "pista": "15"
+              },
+              "expected": {
+                "pista": "15",
+                "reporte": "posição"
+              },
+              "obrigatorios": [],
+              "informativos": [
+                "pista"
+              ]
+            },
+            "emergencia_ativa": true,
+            "pergunta_pendente": null
           },
-          "historico": 6,
+          "historico": 8,
           "sessaoContexto": {
-            "recentes": 2,
-            "caracteres": 575
+            "recentes": 6,
+            "caracteres": 1006
           }
         }
       ],
       "relatorio": {
-        "transmissoes": 6,
-        "avaliacoes": 3,
-        "score": 33,
-        "erros_recorrentes": {
-          "pista": 2,
-          "nível": 1
-        }
+        "transmissoes": 8,
+        "avaliacoes": 1,
+        "score": 100,
+        "erros_recorrentes": {}
       }
     }
   ]

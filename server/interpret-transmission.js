@@ -2,7 +2,10 @@ import { createAutoFreeProvider } from '../src/llm/auto-free-provider.js'
 import { costPolicy } from './cost-policy.js'
 import { interpretSemantically } from '../src/llm/semantic-interpreter.js'
 
-function readBody(request, limit = 12_000) {
+// Limite de transporte (F6): precisa comportar o teto conservador de contexto
+// (`DEFAULT_INPUT_BUDGET_TOKENS` = 8.000 tokens ≈ 32.000 caracteres) mais transcrições e envelope.
+// O corte de contexto por candidato continua sendo do orçamento, não deste limite.
+function readBody(request, limit = 64_000) {
   return new Promise((resolve, reject) => {
     let body = ''
     request.on('data', (chunk) => { body += chunk; if (body.length > limit) reject(Object.assign(new Error('payload_too_large'), { status: 413 })) })
@@ -24,7 +27,11 @@ export function createInterpretTransmissionHandler(env = process.env, options = 
       const providerName = (env.LLM_PROVIDER || 'auto-free').toLowerCase()
       if (providerName !== 'auto-free') throw Object.assign(new Error('unsupported_provider'), { code: 'configuration' })
       const policy = costPolicy(env)
-      const provider = options.provider ?? createAutoFreeProvider({ env, timeoutMs: Number(env.LLM_TIMEOUT_MS) || 15_000 })
+      // Preferência do usuário (F5): prioriza o candidato escolhido sem desativar o fallback.
+      const preferredModelId = typeof body.preferredModelId === 'string' && body.preferredModelId.trim()
+        ? body.preferredModelId.trim().slice(0, 120)
+        : null
+      const provider = options.provider ?? createAutoFreeProvider({ env, timeoutMs: Number(env.LLM_TIMEOUT_MS) || 15_000, preferredModelId })
       const result = await interpretSemantically(body, provider)
       response.statusCode = 200
       response.end(JSON.stringify({ ...result, interpretationMode: 'llm', zeroCostMode: policy.zeroCostMode, allowPaidApi: policy.allowPaidApi }))

@@ -3,6 +3,18 @@
 Status: **substituído parcialmente pela ADR-002** quanto ao provider. A separação
 LLM-first permanece; Gemini não integra mais o pipeline zero-cost.
 
+> **Nota de estado atual (F7).** Onde este documento diz `gemini-provider`, `GEMINI_API_KEY` ou
+> "caminho normal passa a depender de uma chamada Gemini", leia-se o provider da ADR-002
+> (`src/llm/auto-free-provider.js` sobre OpenRouter `:free`, com parser determinístico como
+> fallback). A etapa de decisão deixou de ser um mapa de artigos fixos e passou a descobrir
+> evidência por predicado documental, com o diálogo como estado da sessão — ver
+> [ADR-003](ADR-003-DIALOGO-E-EVIDENCIA.md). A prova de conceito React de voz (`/voice.html` e
+> `/api/generate-reply`) foi descontinuada: a aplicação é uma só (`index.html` + `web/app.js`) e a
+> única rota de LLM é `/api/interpret-transmission`.
+
+Histórico: **Gemini** foi o provider originalmente proposto e foi removido do pipeline antes desta
+nota; a lista de modelos vigente, com custo zero validado ao vivo, está na ADR-002.
+
 ## Arquitetura anterior e problema
 
 O simulador consolidava o Web Speech por sessão, mas a compreensão principal ainda

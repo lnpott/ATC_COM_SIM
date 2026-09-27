@@ -4,7 +4,7 @@ import { buildGroundedRequest, GOLDEN_RULE, validateGroundedReply } from '../src
 import { normalizePhraseology, expandForSpeech } from '../src/normalization.js';
 import { getScenario } from '../src/scenarios.js';
 import { applyStateUpdate, createSimulationState, recordTransmission } from '../src/state-machine.js';
-import { buildSessionReport, evaluateReadback, evaluateReadbackSemantic, explainResult } from '../src/training.js';
+import { buildPendingAuthorization, buildSessionReport, evaluateReadbackAgainstPending, explainResult } from '../src/training.js';
 import { TransmissionQueue } from '../src/radio.js';
 import { SimulatorSession } from '../src/simulator.js';
 import { createBrowserRecognizer, speakTransmission } from '../src/speech.js';
@@ -34,18 +34,39 @@ test('grounding recusa ausência de cobertura e valida fontes do modelo', () => 
 });
 
 test('avalia cotejamento, explica fonte e consolida relatório', () => {
-  const evaluation = evaluateReadback({ autorizacao: 'pista 18, QNH 1013, proa 090', cotejamento: 'pista 18, QNH 1013' });
+  const evaluation = evaluateReadbackAgainstPending(buildPendingAuthorization({ text: 'pista 18, QNH 1013, proa 090' }), 'pista 18, QNH 1013');
   assert.deepEqual(evaluation.omitidos, ['proa']);
   assert.equal(explainResult({ id: 'x', documento: 'MCA', artigo: 'Art. 1', texto: 'regra' }).citacao, 'MCA, Art. 1');
   assert.deepEqual(buildSessionReport([{}], [evaluation]), { transmissoes: 1, avaliacoes: 1, score: 67, erros_recorrentes: { proa: 1 } });
-  assert.deepEqual(evaluateReadback({ autorizacao: 'runway 18, heading 090', cotejamento: 'runway 18' }).omitidos, ['proa']);
+  assert.deepEqual(evaluateReadbackAgainstPending(buildPendingAuthorization({ text: 'runway 18, heading 090' }), 'runway 18').omitidos, ['proa']);
 });
 
 test('readback contextual distingue correto, incompleto e contraditório', () => {
-  const clearance = 'PT-ABC, pista 18, QNH 1015, proa 090.'
-  assert.equal(evaluateReadbackSemantic({ autorizacao: clearance, cotejamento: 'pista 18 QNH 1015 proa 090' }).classification, 'correct')
-  assert.deepEqual(evaluateReadbackSemantic({ autorizacao: clearance, cotejamento: 'pista 18 QNH 1015' }).missing, ['proa'])
-  assert.deepEqual(evaluateReadbackSemantic({ autorizacao: clearance, cotejamento: 'pista 20 QNH 1015 proa 090' }).contradictory, ['pista'])
+  const pending = buildPendingAuthorization({ text: 'PT-ABC, pista 18, proa 090.' })
+  assert.equal(evaluateReadbackAgainstPending(pending, 'pista 18 proa 090').classification, 'correct')
+  assert.deepEqual(evaluateReadbackAgainstPending(pending, 'pista 18').missing, ['proa'])
+  assert.deepEqual(evaluateReadbackAgainstPending(pending, 'pista 20 proa 090').contradictory, ['pista'])
+})
+
+test('cotejamento cobra só o que a autorização exige: QNH informativo e vento nunca obrigam', () => {
+  // Autorização de táxi: pista é instrução, QNH é informação (elements tipados da realização).
+  const taxi = buildPendingAuthorization({
+    intent: 'taxi_request',
+    text: 'PT-ABC, autorizado táxi para o ponto de espera da pista 18, QNH 1015.',
+    elements: [
+      { name: 'pista', value: '18', role: 'instrucao' },
+      { name: 'qnh', value: '1015', role: 'informacao' },
+    ],
+  });
+  assert.deepEqual(taxi.obrigatorios, ['pista']);
+  assert.deepEqual(taxi.informativos, ['qnh']);
+  assert.equal(evaluateReadbackAgainstPending(taxi, 'ciente, táxi para o ponto de espera pista 18').classification, 'correct');
+  // Um informativo repetido com valor errado continua sendo contradição (art. 12, § 1º).
+  assert.deepEqual(evaluateReadbackAgainstPending(taxi, 'pista 18, QNH 1030').contradictory, ['qnh']);
+  // Vento não tem campo de cotejamento: nunca entra como obrigatório, mesmo citado na autorização.
+  const withWind = buildPendingAuthorization({ text: 'pista 18, vento 270 graus 05 nós' });
+  assert.deepEqual(withWind.obrigatorios, ['pista']);
+  assert.equal(withWind.campos.vento, undefined);
 })
 
 test('fila de transmissões serializa tráfego simultâneo', async () => {

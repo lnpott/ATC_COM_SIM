@@ -95,6 +95,36 @@ test('a variante é escolhida pela comunicação, não por um mapa fixo de artig
   assert.notDeepEqual(fire.sourceIds, engine.sourceIds, 'fogo e motor não compartilham o mesmo artigo')
 })
 
+test('o sinal de informação faltante do LLM é consumido, e só sobre requisito documentado (A3.2)', () => {
+  // O LLM declara materialmente ausente o destino/setor que a variante documentada exige (art. 122)
+  // — mesmo com a frase contendo "setor", a decisão pergunta em vez de presumir.
+  const flagged = processTransmission({
+    text: 'PT-ABC pretende saída VFR rumo ao setor norte', idioma: 'pt', state: stateFor('vfr_local_pt'), search,
+    interpretation: { rawText: 'PT-ABC pretende saída VFR rumo ao setor norte', intent: 'vfr_departure', confidence: 0.9, missingOperationalInformation: ['destinationOrSector'], unknownElements: [] },
+  }).decision
+
+  assert.equal(flagged.status, COVERAGE.NEEDS_CLARIFICATION)
+  assert.equal(flagged.reason, 'missing-pilot-information')
+  assert.equal(flagged.coverage.flagged, true)
+  assert.deepEqual(flagged.coverage.flaggedFields, ['destino ou setor'])
+  assert.equal(flagged.pendingQuestion.field, 'destino ou setor')
+
+  // Sem o sinal, o mesmo texto é autorizado: o campo foi falado.
+  const covered = processTransmission({
+    text: 'PT-ABC pretende saída VFR rumo ao setor norte', idioma: 'pt', state: stateFor('vfr_local_pt'), search,
+    interpretation: { rawText: 'PT-ABC pretende saída VFR rumo ao setor norte', intent: 'vfr_departure', confidence: 0.9, missingOperationalInformation: [], unknownElements: [] },
+  }).decision
+  assert.equal(covered.status, COVERAGE.DEMONSTRATED)
+
+  // Campo que nenhuma variante documentada exige não vira pergunta: o LLM não cria requisito.
+  const unrelated = processTransmission({
+    text: 'Solo Galeão, PT-ABC, solicito instruções de táxi', idioma: 'pt', state: stateFor('vfr_local_pt'), search,
+    interpretation: { rawText: 'solicito instruções de táxi', intent: 'taxi_request', confidence: 0.9, missingOperationalInformation: ['vento', 'temperatura'], unknownElements: [] },
+  }).decision
+  assert.equal(unrelated.status, COVERAGE.DEMONSTRATED)
+  assert.deepEqual(unrelated.coverage.flaggedFields ?? [], [])
+})
+
 test('intenções que antes caíam em "sem cobertura" alcançam o artigo que as documenta', () => {
   const cases = [
     ['Solo Galeão, PT-ABC, reportando posição dez milhas ao sul', 'position_report'],

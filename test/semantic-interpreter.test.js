@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { INTERPRETATION_SCHEMA, validateInterpretation } from '../src/llm/schemas.js'
 import { interpretSemantically, limitedSessionContext, SEMANTIC_SYSTEM_INSTRUCTION, toPipelineInterpretation } from '../src/llm/semantic-interpreter.js'
+import { trimSessionContext } from '../src/llm/context-budget.js'
 import { createSimulationState, recordTransmission } from '../src/state-machine.js'
 import { normalizeCallsign } from '../src/callsign.js'
 
@@ -59,13 +60,16 @@ test('ambiguidade e prompt injection permanecem dados, não instruções', async
   assert.deepEqual(result.interpretation.uncertainElements, ['callsign'])
 })
 
-test('contexto de sessão é limitado às duas últimas transmissões e campos confirmados', () => {
+test('contexto de sessão leva o histórico completo e os campos confirmados (o corte é orçamento, não fixo)', () => {
   let state = createSimulationState({ aeronave: { indicativo: 'PT-ABC', posicao: '2' }, cenario: { aerodromo: 'SBGL', pista_em_uso: '18' } })
   for (let i = 0; i < 4; i++) state = recordTransmission(state, { origem: i % 2 ? 'atco' : 'piloto', texto: `mensagem ${i}` })
   const context = limitedSessionContext(state)
-  assert.equal(context.recentHistory.length, 2)
-  assert.deepEqual(context.recentHistory.map(({ text }) => text), ['mensagem 2', 'mensagem 3'])
+  // F6 (A3.12): não existe mais corte fixo de 2 transmissões/500 caracteres nesta camada. O
+  // histórico é montado inteiro e quem corta é `trimSessionContext`, com o orçamento do candidato.
+  assert.deepEqual(context.recentHistory.map(({ text }) => text), ['mensagem 0', 'mensagem 1', 'mensagem 2', 'mensagem 3'])
   assert.equal(context.callsign, 'PT-ABC')
+  const trimmed = trimSessionContext(context, 40)
+  assert.deepEqual(trimmed.recentHistory.map(({ text }) => text), [], 'o corte existe, mas é dirigido pelo orçamento')
 })
 
 test('20 casos held-out atravessam schema e adaptação sem depender de frase literal', async () => {

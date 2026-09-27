@@ -6,13 +6,33 @@ const MODEL_CATALOG_URL = 'https://openrouter.ai/api/v1/models'
 const CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions'
 let catalogCache = null
 
-async function verifyFreeModel(model, fetchImpl, signal) {
+async function loadCatalog(fetchImpl, signal) {
   if (!catalogCache || Date.now() - catalogCache.at > 10 * 60_000) {
     const response = await fetchImpl(MODEL_CATALOG_URL, { signal })
     if (!response.ok) throw new LlmProviderError('free_validation_unavailable', 'Não foi possível validar o catálogo gratuito do OpenRouter.')
     catalogCache = { at: Date.now(), models: (await response.json()).data ?? [] }
   }
-  const metadata = catalogCache.models.find(({ id }) => id === model)
+  return catalogCache.models
+}
+
+/**
+ * Metadado público do modelo no catálogo (`pricing` e `context_length`), com cache de 10 minutos.
+ * É a mesma consulta que a validação gratuita faz — o F6 não gasta chamada extra para descobrir a
+ * janela de contexto, e nenhum valor é presumido.
+ */
+export async function freeModelMetadata(model, { fetchImpl = fetch, signal } = {}) {
+  const models = await loadCatalog(fetchImpl, signal)
+  return models.find(({ id }) => id === model) ?? null
+}
+
+/** Janela de contexto declarada pelo catálogo; `null` quando ausente/zero (não estimar por analogia). */
+export function contextLengthFrom(metadata) {
+  const value = Number(metadata?.context_length)
+  return Number.isFinite(value) && value > 0 ? value : null
+}
+
+async function verifyFreeModel(model, fetchImpl, signal) {
+  const metadata = await freeModelMetadata(model, { fetchImpl, signal })
   if (!metadata || metadata.pricing?.prompt !== '0' || metadata.pricing?.completion !== '0') throw new PaidModelBlockedError(model)
   return metadata
 }

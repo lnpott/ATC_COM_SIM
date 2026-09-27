@@ -30,6 +30,7 @@ export function processTransmission({ text, idioma, state, search, debug = false
     interpretationMode: suppliedInterpretation ? 'llm' : 'deterministic_fallback',
     llmProvider: semanticMeta?.provider ?? null, requestedModel: semanticMeta?.requestedModel ?? null, actualModel: semanticMeta?.actualModel ?? null,
     fallbackDepth: semanticMeta?.fallbackDepth ?? null, freeValidated: semanticMeta?.freeValidated ?? false,
+    contextBudget: semanticMeta?.contextBudget ?? null,
     reasoningMode: semanticMeta?.reasoningMode ?? null, usage: semanticMeta?.usage ?? null, costChargedExpected: 0,
     sttCompletionTime: sttCompletionMs ?? null, llmLatency: semanticMeta?.latencyMs ?? null,
     providerError: semanticMeta?.error ?? null, retrievalLatency, decisionLatency,
@@ -47,6 +48,9 @@ export function processTransmission({ text, idioma, state, search, debug = false
     evidenceUsed: decision.sourceIds,
     evidenceCitation: decision.coverage?.citation ?? null,
     coverageVariant: decision.coverage?.variant?.id ?? null,
+    // Sinal do LLM efetivamente consumido pela decisão (F1/A3.2): quais requisitos documentados a
+    // interpretação declarou ausentes/duvidosos, se algum.
+    llmFlaggedFields: decision.coverage?.flaggedFields ?? [],
     dialogueAct: decision.dialogueAct ?? null,
     pendingQuestion: decision.pendingQuestion?.field ?? null,
     decision: decision.status,

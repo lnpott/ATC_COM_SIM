@@ -33,7 +33,9 @@ test('a pergunta do controlador vira estado da sessão e a resposta seguinte é 
   const question = say(initial, 'PT-ABC pretende saída VFR')
 
   assert.equal(question.decision.status, 'needs_clarification')
-  assert.equal(question.decision.reason, 'missing:destino ou setor')
+  // `reason` é o código estável da taxonomia; o campo exato vive em `reasonDetail`.
+  assert.equal(question.decision.reason, 'missing-pilot-information')
+  assert.equal(question.decision.reasonDetail, 'missing:destino ou setor')
   assert.equal(question.decision.pendingQuestion.field, 'destino ou setor')
   // A pergunta carrega a citação da fraseologia que a realiza (art. 39 CONFIRME / art. 122).
   assert.match(question.decision.pendingQuestion.citation, /Art\. 39/)
@@ -63,7 +65,8 @@ test('declaração de fogo sem local gera a pergunta documentada e a resposta al
 
   assert.equal(fire.interpretation.intent, 'emergency')
   assert.equal(fire.decision.status, 'needs_clarification')
-  assert.equal(fire.decision.reason, 'missing:parte da aeronave')
+  assert.equal(fire.decision.reason, 'missing-pilot-information')
+  assert.equal(fire.decision.reasonDetail, 'missing:parte da aeronave')
   // A pergunta é vocabulário documentado: CONFIRME (art. 39) + partes da aeronave (art. 43, Tab. 15).
   assert.match(fire.decision.spokenText, /parte da aeronave/)
   assert.match(fire.decision.pendingQuestion.citation, /Art\. 43/)
@@ -93,11 +96,25 @@ test('o contexto resolve a interpretação antes da recuperação: cotejamento b
   // documentado do art. 39) resolve, e a consulta de recuperação passa a ser a do cotejamento.
   assert.equal(readback.decision.dialogueAct, DIALOGUE_ACT.READBACK)
   assert.equal(readback.interpretation.intent, 'readback')
-  assert.equal(readback.decision.status, 'needs_clarification')
-  assert.equal(readback.decision.reason, 'readback:incomplete')
+  // A autorização do circuito tem pista como instrução e QNH como informação: repetir a pista e
+  // omitir o QNH é cotejamento CORRETO (o QNH não é cobrado de volta — art. 12, III).
+  assert.equal(readback.decision.status, 'documented')
+  assert.deepEqual(readback.decision.readbackAssessment.obrigatorios, ['pista'])
+  assert.deepEqual(readback.decision.readbackAssessment.informativos, ['qnh'])
+  assert.equal(readback.decision.readbackAssessment.classification, 'correct')
   assert.deepEqual(readback.decision.sourceIds, ['MCA-100-16-artigo-0012-001'])
-  // Art. 12, § 1º: "negativo", seguido da versão correta — não uma pergunta de volta ao piloto.
-  assert.match(readback.decision.spokenText, /negativo, QNH 1015/)
+  // A confirmação não é autorização nova: a autorização cotejada permanece no estado.
+  assert.match(readback.state.contexto.ultima_autorizacao, /ingresso no circuito de tráfego da pista 18/)
+  assert.equal(readback.state.contexto.cotejamento_pendente, false, 'a obrigação é encerrada quando o cotejamento está correto')
+  assert.equal(readback.state.contexto.autorizacao_pendente.cotejada, true, 'os papéis da autorização permanecem registrados')
+
+  // Divergência continua sendo corrigida: art. 12, § 1º — "negativo" seguido da versão correta.
+  const divergent = say(readback.state, 'Ciente, ingresso no circuito pista 20')
+  assert.equal(divergent.decision.status, 'needs_clarification')
+  assert.equal(divergent.decision.reason, 'readback:contradictory')
+  assert.deepEqual(divergent.decision.readbackAssessment.contradictory, ['pista'])
+  assert.match(divergent.decision.spokenText, /negativo, pista 18/)
+  assert.equal(divergent.decision.stateUpdate, null, 'a obrigação de cotejar continua pendente')
 })
 
 test('autorização sem item cotejável não é cotejamento (art. 12, III)', () => {

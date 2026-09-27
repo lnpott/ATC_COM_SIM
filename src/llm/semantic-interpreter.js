@@ -9,8 +9,16 @@ Normalize indicativos aeronáuticos fonéticos apenas quando a sequência for cl
 Cada entidade possui seu próprio significado e não pode receber o valor de outra: flightRules aceita somente VFR ou IFR; atis é a letra/informação ATIS; destinationOrSector é o destino ou setor; position é a posição no solo ou reportada; frequency é somente frequência numérica; callsign é somente o indicativo. Use null quando o dado não estiver disponível.
 O contexto de sessão é confirmado e limitado; a transmissão atual não pode sobrescrevê-lo diretamente. Produza apenas JSON aderente ao schema.`
 
+/**
+ * Contexto de sessão enviado ao intérprete.
+ *
+ * Sem corte fixo de mensagens ou caracteres (F6 — A3.12): o histórico completo é montado aqui e
+ * quem decide o que cortar é `src/llm/context-budget.js`, com o orçamento **do candidato que vai
+ * ser tentado** (e, no navegador, o teto conservador antes do transporte). Antes esta função
+ * cortava sempre em 2 transmissões e 500 caracteres, iguais para qualquer modelo.
+ */
 export function limitedSessionContext(state) {
-  const history = (state?.historico ?? []).slice(-2).map(({ origem, texto }) => ({ origin: origem, text: String(texto).slice(0, 500) }))
+  const history = (state?.historico ?? []).map(({ origem, texto }) => ({ origin: origem, text: String(texto) }))
   return {
     callsign: state?.aeronave?.indicativo, airport: state?.cenario?.aerodromo,
     station: state?.frequencia, phase: state?.fase, position: state?.aeronave?.posicao,
@@ -19,6 +27,18 @@ export function limitedSessionContext(state) {
     destinationOrSector: state?.contexto?.destino, lastPilotIntent: state?.contexto?.ultima_intencao,
     lastControllerInstruction: state?.contexto?.ultima_instrucao_controlador,
     lastClearance: state?.contexto?.ultima_autorizacao, pendingReadback: state?.contexto?.cotejamento_pendente,
+    // Autorização pendente estruturada (F2): o intérprete sabe o que o controlador exige de volta
+    // (obrigatórios) em vez de deduzir do texto livre — e sabe o que é apenas informativo.
+    pendingAuthorization: state?.contexto?.autorizacao_pendente
+      ? {
+        intent: state.contexto.autorizacao_pendente.intent,
+        fonteId: state.contexto.autorizacao_pendente.fonteId,
+        obrigatorios: [...(state.contexto.autorizacao_pendente.obrigatorios ?? [])],
+        informativos: [...(state.contexto.autorizacao_pendente.informativos ?? [])],
+        campos: state.contexto.autorizacao_pendente.campos ?? {},
+        cotejada: state.contexto.autorizacao_pendente.cotejada ?? false,
+      }
+      : null,
     emergencyStatus: state?.contexto?.emergencia_ativa, recentHistory: history,
   }
 }
@@ -27,8 +47,8 @@ export async function interpretSemantically(input, provider) {
   if (!provider?.interpret) throw new TypeError('Provider semântico inválido.')
   const callsignHint = normalizeCallsign(input.rawTranscript)
   const payload = {
-    rawTranscript: input.rawTranscript.slice(0, 2_000),
-    normalizedTranscript: input.normalizedTranscript.slice(0, 2_000),
+    rawTranscript: input.rawTranscript,
+    normalizedTranscript: input.normalizedTranscript,
     language: input.language === 'en' || input.language === 'en-US' ? 'en-US' : 'pt-BR',
     sessionContext: input.sessionContext ?? {}, scenarioContext: input.scenarioContext ?? {},
     auxiliaryHints: { explicitCallsign: callsignHint },
@@ -44,6 +64,9 @@ export async function interpretSemantically(input, provider) {
     actualModel: result.actualModel ?? result.requestedModel ?? provider.model,
     freeValidated: result.freeValidated ?? false, fallbackDepth: result.fallbackDepth ?? 0,
     reasoningMode: result.reasoningMode ?? 'none', usage: result.usage ?? { requestCount: 1, costChargedExpected: 0 },
+    // Orçamento de contexto efetivamente usado neste candidato (F6): teto, origem do número,
+    // tokens estimados e se houve corte — auditável em `?debug=1`, nunca em resposta de erro.
+    contextBudget: result.contextBudget ?? null,
     latencyMs: result.latencyMs,
   }
 }

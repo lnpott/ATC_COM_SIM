@@ -121,9 +121,26 @@ export function resolveCoverage({ interpretation, state, evidence, plan }) {
     return { ...base, status: COVERAGE.SESSION_CONTEXT_MISSING, reason: sessionRequires.reason, sources: [], citation: null, message: sessionRequires.message }
   }
 
+  // Sinal do LLM (§4 do PLANO_REF, achado A3.2): `missingOperationalInformation` e
+  // `uncertainElements` são **entradas** da decisão, nunca a decisão. Eles só podem tornar
+  // explícito que um requisito **já documentado** não foi satisfeito; não criam pergunta sem base
+  // documental nem substituem a variante escolhida pela documentação.
+  const flagged = flaggedRequirements(variant, interpretation)
   const requirement = unmetRequirement(variant, interpretation, state)
   if (requirement) {
-    return { ...base, status: COVERAGE.NEEDS_CLARIFICATION, reason: COVERAGE_REASON.MISSING_PILOT_INFORMATION, requirement, sources: [], citation: null }
+    return {
+      ...base, status: COVERAGE.NEEDS_CLARIFICATION, reason: COVERAGE_REASON.MISSING_PILOT_INFORMATION,
+      requirement, sources: [], citation: null, flagged: flagged.includes(requirement.field), flaggedFields: flagged,
+    }
+  }
+  if (flagged.length) {
+    // A interpretação declarou materialmente ausente (ou duvidoso) o dado que a documentação
+    // exige — mesmo que o texto tenha casado com um termo de detecção. Perguntar é mais seguro do
+    // que autorizar com o valor presumido, e a pergunta é a mesma variante documentada.
+    return {
+      ...base, status: COVERAGE.NEEDS_CLARIFICATION, reason: COVERAGE_REASON.MISSING_PILOT_INFORMATION,
+      requirement: variant.requires, sources: [], citation: null, flagged: true, flaggedFields: flagged,
+    }
   }
 
   const sources = recoveredSources(variant, evidence)
@@ -141,6 +158,31 @@ export function resolveCoverage({ interpretation, state, evidence, plan }) {
  * sessão (`session`) ou dos dados extraídos pela interpretação (`fromInterpretation`).
  * Nada é inferido: o que não foi dito e não está confirmado precisa ser perguntado.
  */
+/**
+ * Requisitos documentados que a interpretação declarou materialmente ausentes ou duvidosos.
+ *
+ * O casamento é deliberadamente conservador (o LLM escreve texto livre nesse campo): só conta
+ * quando o campo relatado **nomeia** o requisito ou um dos seus termos documentados. Um campo
+ * relatado que nenhuma variante exige — "vento" numa solicitação de táxi, por exemplo — continua
+ * sem gerar pergunta: ele não é requisito de nada.
+ *
+ * Fica de fora `uncertainElements`: o parser determinístico também escreve nesse campo o que não
+ * conseguiu classificar (verbosidade da frase), então usá-lo faria uma dúvida de vocabulário
+ * virar dúvida operacional. Ele permanece disponível na interpretação e no diagnóstico.
+ */
+function flaggedRequirements(variant, interpretation) {
+  const requirement = variant?.requires
+  if (!requirement?.field) return []
+  const reported = (interpretation?.missingOperationalInformation ?? []).filter((entry) => typeof entry === 'string')
+  if (!reported.length) return []
+  const terms = [requirement.field, ...(requirement.detect ?? [])].map(FOLD).filter((term) => term.length > 3)
+  const mentioned = reported.some((entry) => {
+    const text = FOLD(entry)
+    return text.length > 3 && terms.some((term) => text.includes(term) || term.includes(text))
+  })
+  return mentioned ? [requirement.field] : []
+}
+
 function unmetRequirement(variant, interpretation, state) {
   const requirement = variant.requires
   if (!requirement) return null

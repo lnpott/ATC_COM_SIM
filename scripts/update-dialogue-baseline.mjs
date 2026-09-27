@@ -25,7 +25,7 @@ import { applyStateUpdate, createSimulationState, recordTransmission } from '../
 import { normalizePhraseology } from '../src/normalization.js'
 import { processTransmission } from '../src/pipeline.js'
 import { limitedSessionContext } from '../src/llm/semantic-interpreter.js'
-import { buildSessionReport, evaluateReadback } from '../src/training.js'
+import { buildSessionReport } from '../src/training.js'
 
 const INVENTORY_URL = new URL('../reference/dialogue-inventory.v1.json', import.meta.url)
 const BASELINE_URL = new URL('../reference/dialogue-baseline.v1.json', import.meta.url)
@@ -46,7 +46,7 @@ export async function loadInventory() {
   return inventory
 }
 
-function snapshotTurn({ turno, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado, cotejamentoLegado }) {
+function snapshotTurn({ turno, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado }) {
   return {
     turno,
     piloto: rawText,
@@ -58,11 +58,14 @@ function snapshotTurn({ turno, rawText, normalizedText, interpretation, decision
     covered: decision.covered,
     spokenText: decision.spokenText,
     sourceIds: decision.sourceIds ?? [],
-    cotejamentoLegado,
-    cotejamentoSemantico: decision.readbackAssessment ? {
+    // Avaliacao unica (F2): o proprio controlador decide e avalia contra a autorizacao pendente.
+    cotejamento: decision.readbackAssessment ? {
       classification: decision.readbackAssessment.classification,
       missing: decision.readbackAssessment.missing,
       contradictory: decision.readbackAssessment.contradictory,
+      obrigatorios: decision.readbackAssessment.obrigatorios ?? [],
+      informativos: decision.readbackAssessment.informativos ?? [],
+      score: decision.readbackAssessment.score,
     } : null,
     estadoAplicado: decision.stateUpdate !== null,
     erroAplicacaoEstado,
@@ -85,7 +88,6 @@ export async function runInventory() {
     const scenario = getScenario(roteiro.cenario)
     const idioma = scenario.idioma
     let state = createSimulationState(scenario)
-    let lastClearance = null
     const evaluations = []
     const turnos = []
 
@@ -93,13 +95,12 @@ export async function runInventory() {
       const rawText = turn.piloto
       const normalizedText = normalizePhraseology(rawText)
       const sessionContext = limitedSessionContext(state)
-      const cotejamentoLegado = lastClearance ? evaluateReadback({ autorizacao: lastClearance, cotejamento: normalizedText }) : null
-      if (cotejamentoLegado) evaluations.push(cotejamentoLegado)
       state = recordTransmission(state, { origem: 'piloto', texto: normalizedText })
       const { interpretation, decision } = processTransmission({ text: rawText, idioma, state, search })
+      if (decision.readbackAssessment) evaluations.push(decision.readbackAssessment)
 
       if (!decision.covered) {
-        turnos.push(snapshotTurn({ turno: index + 1, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado: null, cotejamentoLegado }))
+        turnos.push(snapshotTurn({ turno: index + 1, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado: null }))
         continue
       }
 
@@ -112,14 +113,13 @@ export async function runInventory() {
           // mensagem do controlador nao entra no historico e o turno termina. Reproduzimos
           // esse desfecho e registramos o erro como parte da caracterizacao.
           erroAplicacaoEstado = `${error.name}: ${error.message}`
-          turnos.push(snapshotTurn({ turno: index + 1, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado, cotejamentoLegado }))
+          turnos.push(snapshotTurn({ turno: index + 1, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado }))
           continue
         }
       }
 
       state = recordTransmission(state, { origem: 'atco', texto: decision.spokenText, fontes: decision.sourceIds })
-      lastClearance = decision.spokenText
-      turnos.push(snapshotTurn({ turno: index + 1, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado, cotejamentoLegado }))
+      turnos.push(snapshotTurn({ turno: index + 1, rawText, normalizedText, interpretation, decision, sessionContext, state, erroAplicacaoEstado }))
     }
 
     roteiros.push({

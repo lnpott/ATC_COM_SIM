@@ -3,10 +3,20 @@ Simulador de comunicações com ATCO's
 
 ## Arquitetura
 
-O frontend, construído com Vite, preserva duas experiências complementares: o
-simulador documental em `/`, com entrada por texto/PTT, cenários, evidências e
-score; e a prova de conceito React de voz em `/voice.html`. O endpoint
-`/api/interpret-transmission` e `/api/generate-reply` são funções serverless Node.js na Vercel; as credenciais permanecem exclusivamente no servidor. Em desenvolvimento, o plugin de `vite.config.js` expõe os mesmos handlers. O interpretador principal usa apenas providers explicitamente gratuitos; o parser local existe como fallback identificado. Nenhuma chamada Gemini integra o pipeline atual.
+A aplicação é uma só: o simulador documental em `/` (`index.html` + `web/app.js`),
+com entrada por texto/PTT, cenários, evidências e score. O endpoint
+`/api/interpret-transmission` (interpretador semântico com grounding obrigatório) e
+`/api/transcribe` (STT) são funções serverless Node.js na Vercel; as credenciais permanecem
+exclusivamente no servidor. Em desenvolvimento, o plugin de `vite.config.js` expõe os mesmos
+handlers. O interpretador principal usa apenas providers explicitamente gratuitos; o parser local
+existe como fallback identificado. Nenhuma chamada Gemini integra o pipeline atual.
+
+A prova de conceito React (`/voice.html` → `/api/generate-reply`) foi **descontinuada**: aquele
+caminho não tinha RAG, estado de voo nem grounding, e a decisão arquitetural registrada em
+`docs/REFATOR_DEEP.md` (§F7, opção A) manteve a interface fundamentada nos manuais como a única
+do produto. O que a prova de conceito tinha de útil (indicação de idioma da sessão, aviso de
+incompatibilidade com a Web Speech, tratamento do erro de microfone, canal de rádio dirigido pelo
+fim do TTS) foi portado — a checklist está em `docs/INVENTARIO-APP-JSX.md`.
 
 ## Instalação e execução
 
@@ -18,22 +28,22 @@ npm run dev
 ```
 
 O Vite informa a URL local (normalmente `http://localhost:5173`). A tela oferece
-cenários, entrada por texto e PTT, evidência documental e score. A rota
-`/voice.html` oferece o loop PT/EN conectado ao endpoint server-side. Chrome ou
-Edge recente, HTTPS (exceto em localhost) e permissão de microfone são
-necessários para os fluxos de voz; o simulador principal continua utilizável
-por texto quando a Web Speech API não está disponível.
+cenários, entrada por texto e PTT, evidência documental e score. Chrome ou Edge
+recente, HTTPS (exceto em localhost) e permissão de microfone são necessários para
+os fluxos de voz; quando a Web Speech API não está disponível a tela **avisa** e o
+simulador continua plenamente utilizável por texto.
 
 Comandos disponíveis:
 
 ```bash
 npm test          # testes unitários e de integração
+npm run test:dialogue       # matriz normativa de regressão de diálogo (sequências multi-turno)
+npm run test:dialogue-baseline # detector de mudança da caracterização (não-normativo)
 npm run test:stt  # fixture e cadeia STT gratuita
 npm run test:llm  # OpenRouter real, somente modelos free
 npm run benchmark:llm # precisão/schema/latência apenas de candidatos free
 npm run validate  # consultas de referência e reprodutibilidade do índice
-npm run test:ai-sdk # política de custo e provider do Vercel AI SDK (mock fetch)
-npm run build     # build de produção em dist/
+npm run build     # build de produção em dist/ (entrada única: o simulador)
 npm run audit     # todos os comandos acima
 npm start         # serve dist/ após um build
 ```
@@ -52,31 +62,25 @@ A configuração completa, sem valores secretos, está em `.env.example`. A orde
 fixos `:free` subsequentes, `openrouter/free` e parser determinístico. Gemini não é
 usado. TTS permanece `SpeechSynthesis` do browser.
 
-### Vercel AI SDK (opt-in, apenas `/api/generate-reply`)
+Nomes lidos pelo código (nenhum valor, nada de segredo): política de custo
+(`ZERO_COST_MODE`, `ALLOW_PAID_API`, `OPENROUTER_FREE_ONLY`, `GROQ_FREE_TIER_CONFIRMED`),
+interpretador (`LLM_PROVIDER`, `LLM_TIMEOUT_MS`, `LLM_CANDIDATES`, `OPENROUTER_FREE_PRIMARY`,
+`OPENROUTER_FREE_SECONDARY`, `OPENROUTER_FREE_TERTIARY`, `OPENROUTER_FREE_QUATERNARY`,
+`OPENROUTER_FREE_ROUTER`, `GROQ_LLM_PRIMARY`, `GROQ_LLM_SECONDARY`, `GROQ_MODEL`), orçamento de
+contexto (`LLM_CONTEXT_BUDGETS`, `LLM_CONTEXT_BUDGET_DEFAULT`, `LLM_CONTEXT_RESERVE_TOKENS`),
+voz (`STT_GROQ_MODEL`, `STT_FIXES`) e chaves (`OPENROUTER_API_KEY`, `GROQ_API_KEY`). Os nomes
+`AI_PROVIDER`, `AI_SDK_*`, `OPENAI_API_KEY` e `OPENAI_BASE_URL` deixaram de ser lidos com a
+remoção do caminho sem grounding (F7) e podem ficar vazios no ambiente.
 
-O Vercel AI SDK (`ai` + `@ai-sdk/openai`) está integrado em
-`server/ai-sdk-provider.js` como um provedor opcional para a resposta do
-controlador no loop de voz (`server/providers.js`). Ele nunca é usado pelo
-interpretador semântico (`/api/interpret-transmission`), que mantém sua cadeia
-free-only (ADR-002).
+### Sem provider pago alcançável
 
-Ativação exige **duas** variáveis ao mesmo tempo:
-
-```bash
-AI_PROVIDER=ai-sdk
-ALLOW_PAID_API=true
-OPENAI_API_KEY=sk-...   # via painel de chaves/secret manager, nunca no repositório
-```
-
-Enquanto `ZERO_COST_MODE=true` (padrão), o provedor permanece bloqueado por
-`server/cost-policy.js` mesmo com chave configurada. Com `ZERO_COST_MODE=false`,
-o interpretador semântico continua sujeito à política free-only.
-
-Variáveis opcionais: `AI_SDK_MODEL` (padrão `gpt-4o-mini`),
-`AI_SDK_TIMEOUT_MS` (padrão `12000`) e `OPENAI_BASE_URL` (gateway compatível com
-a API Chat Completions). A chamada usa `generateText` do AI SDK com
-`abortSignal` de timeout; sem streaming, para manter o contrato simples de
-resposta única do endpoint.
+O único caminho pago que existia — o opt-in do Vercel AI SDK
+(`AI_PROVIDER=ai-sdk` + `ALLOW_PAID_API=true`) para a resposta do controlador no loop de voz sem
+grounding — foi removido com a interface paralela (F7). Com isso, a política de custo não tem mais
+nenhuma exceção: `server/cost-policy.js` só permite OpenRouter explicitamente `:free` (com
+`pricing.prompt=0` e `pricing.completion=0` confirmados no catálogo público), Groq com tier
+comprovado e os recursos locais/navegador. `ZERO_COST_MODE=true` e `ALLOW_PAID_API=false`
+permanecem invariantes (ADR-002).
 
 ## Implantação na Vercel
 
@@ -97,12 +101,73 @@ Implantação mantida por este repositório:
 
 - Projeto: `lnpotts-projects/atc-com-sim`
 - Produção: <https://atc-com-sim.vercel.app>
-- Simulador documental: `/`
-- Laboratório React de voz: `/voice.html`
+- Simulador documental: `/` (entrada de build única)
 
 A proteção SSO da equipe permanece ativa nas URLs de preview; smoke tests de
 preview precisam usar o bypass de automação da Vercel. A URL de produção é
 pública e foi validada sem credenciais.
+
+## Cotejamento e autorização pendente
+
+A autorização que o controlador emite é guardada como **objeto estruturado**
+(`contexto.autorizacao_pendente`), não como booleano: `obrigatorios` é o que o piloto precisa
+repetir e `informativos` é o que ele apenas reporta. Os papéis vêm dos elementos tipados da
+realização (`src/phraseology.js`), não de quantos números a frase tem:
+
+- **QNH meramente informativo** (táxi, circuito, partida VFR) não é cobrado de volta — repetir a
+  pista e omitir o QNH é cotejamento **correto**;
+- **vento e dados meteorológicos** nunca são exigidos: não têm campo cotejável;
+- repetir um informativo com valor errado continua sendo **divergência** (Art. 12, § 1º: o
+  controlador responde "negativo" seguido da versão correta e a obrigação permanece pendente);
+- cotejamento correto encerra a obrigação **sem** sobrescrever a autorização cotejada.
+
+A tabela e o avaliador ficam em `src/readback-rules.js` (substitui os dois avaliadores divergentes
+que existiam em `src/training.js`) e estão citados no Art. 12, III e Art. 45 do MCA 100-16.
+
+## Regressão de diálogo (matriz normativa)
+
+`reference/dialogue-regression-matrix.json` descreve sequências completas de voo, cada turno com a
+fonte documental esperada, a fase/frequência resultantes e — quando o turno é uma repetição — a
+classificação do cotejamento. Diferente dos testes de transmissão isolada, a execução evolui **um
+único estado** turno a turno, como o navegador faz.
+
+```bash
+npm run test:dialogue            # valida a matriz e executa os roteiros
+npm run validate:dialogue-matrix # só o schema/corpus/Art. 12, III
+```
+
+O validador `scripts/validate-dialogue-matrix.mjs` barra fonte inexistente no corpus, `intent`
+desconhecido, campo obrigatório fora do Art. 12, III e fonte que não pertence à regra documental da
+própria intenção. O `npm run audit` roda `test:dialogue` junto com a suíte.
+
+## PTT, fonia e modelos
+
+- **PTT**: apertar, segurar e soltar em qualquer lugar da tela encerra a captura (os eventos de
+  soltura são escutados na `window` apenas enquanto existe operação ativa). O botão mostra o estado
+  do **canal** — `LIVRE`, `TRANSMITINDO`, `RECEBENDO` (`src/ptt-state.js`) — e fica indisponível
+  enquanto a frequência está ocupada pela resposta (half-duplex). Os estágios internos do pipeline
+  continuam existindo só em `?debug=1`. O canal volta a `LIVRE` quando o áudio termina de tocar.
+- **Fonia**: toda fala do controlador é falada, inclusive pedido de esclarecimento, recusa por base
+  insuficiente e dado externo não integrado (`src/tts-policy.js`).
+- **Sinal de informação faltante**: quando a interpretação declara materialmente ausente (ou
+  duvidosa) uma informação que a variante **documentada** exige, a decisão pergunta em vez de
+  autorizar com o valor presumido — o sinal do LLM é entrada da decisão, nunca a decisão, e não cria
+  pergunta que a documentação não preveja (`src/knowledge.js`, `llmFlaggedFields` em `?debug=1`).
+- **Modelos**: o seletor do painel de cenário prioriza um candidato gratuito (persistido em
+  `localStorage` e enviado como `preferredModelId`); a prioridade **nunca desliga o fallback** — se o
+  preferido falhar, a resposta segue pelo próximo modelo gratuito, e o indicador ao lado do botão de
+  voz mostra qual modelo respondeu de fato (`↻ alternativa N` quando houve troca).
+- **Orçamento de contexto** (`src/llm/context-budget.js`): o histórico é cortado conforme o orçamento
+  do candidato **que está prestes a ser tentado**, preservando indicativo, aeródromo, fase,
+  frequência, pista, última autorização, autorização/pergunta pendente e situação de emergência.
+  Nada é presumido por fornecedor: a janela vem do `context_length` do **catálogo público** que a
+  validação gratuita já consulta, menos a reserva de resposta (`RESPONSE_RESERVE_TOKENS`); quando o
+  metadado não existe, o orçamento cai no teto conservador (8.000 tokens de entrada) — nunca no
+  maior valor conhecido — e registra a origem (`catalog`, `configured` ou `default`) no diagnóstico
+  de `?debug=1`. Uma janela pequena corta o histórico antigo em vez de recusar o candidato; se nem
+  o contexto operacional couber, o candidato é pulado **sem** chamada de rede com o código
+  `llm_context_budget_exceeded` (nunca como "documento ausente"). `LLM_CONTEXT_BUDGETS` (JSON) e
+  `LLM_CONTEXT_BUDGET_DEFAULT` continuam existindo como sobreposição explícita do operador.
 
 ## Busca documental
 
@@ -176,8 +241,10 @@ permissão de microfone; pressionar PTT, falar a frase longa, soltar e confirmar
 gravacão, transcrição, interpretação e resposta. Microfone físico e qualidade das
 vozes continuam dependentes do dispositivo.
 
-Veja [ADR-002](docs/ADR-002-ZERO-COST.md) e a
-[decisão LLM-first original](docs/ADR-001-LLM-FIRST.md).
+Veja [ADR-002](docs/ADR-002-ZERO-COST.md), a
+[decisão LLM-first original](docs/ADR-001-LLM-FIRST.md) e a
+[ADR-003](docs/ADR-003-DIALOGO-E-EVIDENCIA.md), que registra por que a evidência é descoberta por
+predicado documental e por que o diálogo passou a ser estado da sessão.
 
 ## Motor e módulos de treino
 
