@@ -4,7 +4,7 @@ Documento de **acompanhamento**. Ele não substitui o plano: `docs/REFATOR_DEEP.
 ser feito, *por quê* e *como* em cada fase; este arquivo registra *onde estamos agora* — o que já foi
 executado, com qual evidência, o que está em andamento e qual é o próximo passo.
 
-- Última atualização: 27/09/2026 (execuções 4–6: fechamento de F1/F6, A3.17, unificação da interface — F7 — e auditoria final — F8)
+- Última atualização: 27/09/2026 (execuções 4–9: fechamento de F1/F6, A3.17, unificação da interface — F7 —, auditoria final — F8 —, revisão pós-merge do PR #7, correção de C1/A1 e fechamento dos achados M1/M2/B1–B5)
 - Plano de referência: `docs/REFATOR_DEEP.md`
 - Briefing de origem: `docs/PLANO_REF.md`
 
@@ -26,10 +26,10 @@ por comando reproduzível.
 | F4 | PTT e estados de rádio | **Concluída** | `src/ptt-state.js` (Livre/Transmitindo/Recebendo), fim de captura na `window`, botão bloqueado em `recebendo` |
 | F5 | Modelos gratuitos: preferência, visibilidade e continuidade | **Concluída** | `preferredModelId` reordena sem desligar o fallback, indicador visível, teste de continuidade de contexto |
 | F6 | Gestão de contexto e janela de tokens | **Concluída** | Orçamento da janela real do catálogo (`context_length` − reserva), sem corte fixo de mensagens/chars, `context_budget_exceeded` sem chamada de rede e origem do número no diagnóstico |
-| F7 | Unificação da interface e descontinuação da paralela | **Concluída** | `voice.html`, `src/App.jsx`/`main.jsx`/`styles.css`, `/api/generate-reply`, `server/providers.js`, `server/ai-sdk-provider.js`, `public/radio-mark.svg` e as dependências React/AI SDK removidos; entrada de build única e itens 1/3/9 do inventário portados |
+| F7 | Unificação da interface e descontinuação da paralela | **Concluída** | `voice.html`, `src/App.jsx`/`main.jsx`/`styles.css`, `/api/generate-reply`, `server/providers.js`, `server/ai-sdk-provider.js`, `public/radio-mark.svg` e as dependências React/AI SDK removidos; entrada de build única e itens 1/3/9 do inventário portados. A ressalva da execução 7 (fonia não fiada) foi corrigida na execução 8 e passou a ser afirmada por teste (`test/app-wiring.test.js`) |
 | F8 | Auditoria final e validação integrada | **Concluída**, com a conferência humana declarada | `npm run audit` verde depois de F5/F6/F7 (105 testes + 9 da matriz + índice reproduzível + corpus + build de entrada única); nenhum provider pago ou sem grounding alcançável; A3.1–A3.17 com estado final registrado; documentação consolidada; limitações visíveis no README |
 
-Legenda: **Concluída** · **Em andamento** · **Pendente** · **Bloqueada** (com motivo registrado).
+Legenda: **Concluída** · **Concluída, com ressalva** (critério do plano não verificado na execução, com motivo e evidência na entrada do registro) · **Em andamento** · **Pendente** · **Bloqueada** (com motivo registrado).
 
 ## Registro de execução
 
@@ -323,6 +323,236 @@ mudanças de contexto e da unificação da interface).
 - a validação pedagógica do cotejamento com instrutor é humana;
 - microfone físico, permissão de microfone e vozes instaladas dependem de conferência humana no
   navegador/sistema de destino — nenhum teste automatizado os substitui.
+
+### 7. Revisão pós-merge do PR #7 (`ecaa9c1`) — sem alteração de código
+
+**Escopo.** A revisão foi pedida sobre "as mudanças não commitadas". `git status --porcelain` está
+vazio em `main` (`3d58cf9`): não há alteração pendente, e o objeto real da revisão é o diff já
+mergeado em `ecaa9c1` (PR #7) — 52 arquivos, +3130/−1422. **Nenhum arquivo foi alterado nesta
+execução**; os achados ficam registrados para correção e são o item 1 do próximo passo.
+
+**Verificação executada**
+
+- `npm test`: **105/105** verde (o `node --test test/*.test.js` inclui os 9 casos da matriz do F3).
+  Os achados abaixo são, portanto, lacunas que a suíte **não** vê — não testes vermelhos.
+- Sondas reprodutíveis com `node --input-type=module -e` sobre os módulos reais (sem alterar
+  arquivos), registradas em cada achado.
+
+**Achados**
+
+**C1 — Crítico (corrigido na execução 8). `web/app.js:217` usa `speakTransmission` sem importar: a fonia inteira está morta.**
+A linha 5 importa apenas `{ createRecognitionSession }`; antes deste commit a mesma linha era
+`import { createRecognitionSession, speakTransmission } from '../src/speech.js';`
+(`git show 7ab80e5:web/app.js`). Em módulo ES a chamada lança `ReferenceError` em tempo de execução,
+dentro do `try` de `speakReply`, que o captura e chama `finish()` → o canal volta a `livre` e, fora de
+`?debug=1`, **nada** indica a falha. Nem Vite nem rollup acusam (variável livre é tratada como global),
+e `test/tts-coverage.test.js` passa porque afirma `shouldSpeak`, não o ponto de chamada. Consequência
+direta: o critério de F7/A3.9 ("toda fala do controlador é falada") e o de A3.10 ("o canal volta a
+`livre` no fim do TTS") não estão em efeito. **Correção:** reimportar `speakTransmission`.
+
+**A1 — Alto (corrigido na execução 8, com correção de escopo). `src/dialogue.js:141` avalia
+`REQUEST_MARKERS` antes de `answersPending`, e por substring.** `confirme|confirm` casa também com `confirmado`/`confirmo`, e o ramo tem precedência
+sobre a resposta à pergunta pendente. Reproduzido com `pergunta_pendente = 'parte da aeronave'` e uma
+autorização de fogo no estado:
+
+```
+"Fogo no motor direito."              -> answer
+"Confirmado, fogo no motor direito."  -> unrelated   (controlador reformula a mesma pergunta)
+"Confirmo: fogo no motor direito."    -> unrelated
+```
+
+Como a pergunta pendente é justamente uma frase que começa por "confirme…", o prefixo em colisão é
+prosa de treino provável, e o piloto que responde "confirmado" entra em laço. **Correção:** testar
+`pending && answersPending(...)` **antes** do ramo de `REQUEST_MARKERS` (um pedido ao controlador sem
+vocabulário da pergunta pendente continua caindo lá).
+
+**M1 — Médio (corrigido na execução 9). `web/app.js:44` acessa `localStorage` no topo do módulo, fora
+de `try/catch`** (novo em F5; não existia antes do commit). Onde o acesso a storage lança
+(`SecurityError` em contexto sandbox/iframe ou storage bloqueado), o corpo do módulo não avalia e o
+simulador fica em branco — o `try/catch` do fim do arquivo só cobre o carregamento do índice.
+**Correção:** acessador seguro (get/set/remove com `try/catch`).
+
+**M2 — Médio (corrigido na execução 9). `web/app.js:387` põe `pointerleave` no botão PTT, o que é mais
+amplo que o requisito do F4.** O `pointerup`/`pointercancel` na `window` já implementa "soltar em
+qualquer lugar da tela"; o `pointerleave` **adicionalmente** encerra a captura quando o cursor apenas
+sai do botão com o PTT pressionado — o que contradiz o texto de ajuda do painel ("a gravação termina
+quando você soltar em qualquer lugar da tela"). Rede de segurança mais estreita: `blur` da `window`
+ou `pointerout` com `relatedTarget === null`; alternativamente, ajustar o texto de ajuda. **Correção:**
+decidir a intenção e fixá-la em teste — hoje nenhum teste cobre esta fiação.
+
+**B1 — Baixo (corrigido na execução 9). `src/llm/context-budget.js:92` não implementa o piso que o próprio docstring promete.**
+O comentário diz que `shortenHistoryItem` devolve `null` quando "nem a versão mais curta útil cabe — o
+item é descartado em vez de virar um fragmento"; o laço só termina em `text.length <= 1`. Reproduzido:
+com orçamento 25 o item mantido é `"transmissao muito longa transm"` (fragmento truncado no meio da
+palavra). **Correção:** piso mínimo (comprimento ou fração do original) ou remover a promessa do
+comentário.
+
+**B2 — Baixo (corrigido na execução 9). `src/controller.js:92` — `sourceIds: pending.sources ?? []` é expressão morta.**
+`createPendingQuestion` nunca define `sources`, então a reformulação da pergunta sempre reporta zero
+fontes, embora tenha `pending.citation` (e `diagnostics.evidenceCitation` seja `null` nesse caminho).
+**Correção:** derivar os ids da realização composta ou remover a expressão.
+
+**B3 — Baixo (corrigido na execução 9). `server/interpret-transmission.js:39` — os códigos novos do F6 não estão no mapa de
+status.** `context_budget_exceeded` e `llm_context_budget_exceeded` caem no `?? 502`. O código **chega**
+ao cliente no corpo da resposta (a UI mostra "interpretação determinística
+(llm_context_budget_exceeded)"), mas o status HTTP não representa o pulo deliberado documentado no
+README. **Correção:** mapear explicitamente (503).
+
+**B4 — Baixo (corrigido na execução 9). `web/app.js:71-84` — seletor e indicador de modelo podem discordar.** `select.value =
+preferredModelId` cai silenciosamente em "Automático" quando o id persistido não está mais no catálogo,
+enquanto `renderModelStatus(null)` continua exibindo `preferido: <id>`; além disso o listener de
+`change` é readicionado a cada chamada de `renderModelSelect()`. **Correção:** validar contra
+`modelCandidates()` e registrar o listener uma vez.
+
+**Testes que faltam (o que teria pegado os achados)**
+
+- **Nenhum teste carrega `web/app.js`** — o arquivo dono da fiação de PTT/canal/idioma/fonia/modelo.
+  É a causa única de C1 (e deixaria passar M1/M2). Alternativas sem dependência nova: teste de fiação
+  rodando o módulo contra um stub de `document`/`window` (mesmo estilo de injeção de `scope` já usado
+  em `src/speech.js`) ou teste estático de que todo identificador chamado em `web/app.js` é
+  importado/declarado/global.
+- **`advancePhase` sem teste unitário** (só um turno da matriz o exercita). Sonda: `decolagem → pouso
+  = aproximacao`, `rota → pouso = aproximacao`, `aproximacao → pouso = pouso`, `pouso → pouso = null`,
+  `encerrado → pouso = null`; e o no-op de `landingTransition` no solo (`fase: 'solo'` → sem mudança de
+  fase nem de frequência).
+- **Caminho de encurtamento do item de histórico** (`shortenHistoryItem`): os testes atuais de
+  `trimSessionContext` afirmam só "o histórico encolheu".
+- **`languageSibling`/`renderLanguage`/`renderSpeechSupport`:** sonda confirma `vfr_local_pt ⇄
+  vfr_local_en`, mas `ifr_partida_pt` e `emergencia_motor_pt` **não têm irmão** — o botão de idioma
+  precisa ficar desabilitado nesses dois cenários, e isso não está afirmado em teste.
+
+### 8. Correção de C1 e A1 com testes de regressão
+
+Executada sobre os achados da execução 7. Nada de M1/M2/B1–B4 foi tocado aqui.
+
+**Entregue**
+
+- **C1 — a fonia volta a existir:** `web/app.js` importa de novo `speakTransmission` de
+  `src/speech.js` (a chamada em `speakReply` nunca saiu do arquivo; a `ReferenceError` era engolida
+  pelo `try`). Com isso a política de fonia do F7 (toda fala do controlador é falada) e o critério de
+  A3.10 (canal liberado no fim do TTS) voltam a estar em efeito.
+- **A1 — resposta à pendente antes do pedido de confirmação:** em `src/dialogue.js`
+  (`evaluateDialogue`), a resposta à pergunta pendente passou a ser avaliada **antes** de
+  `REQUEST_MARKERS`, que é procurado por substring e casa com "confirmado"/"confirmo" — e a pendente
+  é, ela própria, um pedido de confirmação (art. 39, CONFIRME). A precedência documentada no cabeçalho
+  foi reescrita (3 = resposta à pendente, 4 = pedido de confirmação) e comentada no ponto de decisão.
+- **Correção de escopo do achado A1:** a reprodução registrada na execução 7 usou uma interpretação
+  construída à mão **sem** `emergency: true`. No pipeline real, a resposta de fogo já era atendida pelo
+  ramo de emergência, que precede os marcadores; a superfície real do defeito é a pergunta pendente
+  **não-emergencial** (destino ou setor, art. 122). Confirmado por sonda antes e depois da correção:
+  antes, `"Confirmado, VFR saída para o setor norte"` → `unrelated` + `needs_clarification`
+  (reformulação); depois → `answer` + `documented`, citando o art. 122.
+
+**Testes de regressão (novos)**
+
+- `test/app-wiring.test.js` — **fiação do app oficial**, o arquivo que nenhum teste carregava:
+  1. todo identificador **chamado** em `web/app.js` precisa estar vinculado (import, declaração de
+     topo ou global), com o import da fonia afirmado explicitamente. A checagem é validada contra uma
+     **cópia mutilada** do próprio arquivo, que precisa acusar exatamente `speakTransmission` — o teste
+     não passa por vacuidade;
+  2. o app é **executado** contra um `document`/`SpeechSynthesis` de mentira: `submit` → pipeline →
+     TTS, afirmando que a fala emitida é `prepareSpeechText` da resposta do controlador, que o canal
+     fica `RECEBENDO` durante a fonia e só volta a `LIVRE` no `onend` (A3.10), e que a pergunta sem
+     cobertura documental também é falada (A3.9), não apenas exibida.
+- `test/dialogue-state.test.js` — caso novo de A1: com pendente "destino ou setor",
+  `"Confirmado, VFR saída para o setor norte"` e `"Confirmo: …"` são `answer`/`documented` (art. 122) e
+  encerram a pendente; `"Confirme minha autorização"` continua **não** sendo resposta (o controlador
+  reformula) e, fora do contexto de pendente, segue `normal`.
+
+**Verificação**
+
+- `npm test`: **108/108** (105 anteriores + 2 de fiação do app + 1 de A1).
+- `npm run test:dialogue`: **9/9** (matriz normativa reexecutada).
+- **Prova de que os testes pegam os defeitos:** os mesmos arquivos de teste rodados contra o commit
+  pré-correção (`3d58cf9`, em worktree descartável) falham **exatamente** nos três casos novos —
+  `"o import da fonia precisa vincular speakTransmission e createRecognitionSession"`,
+  `"tempo esgotado: a resposta do controlador não foi falada"` e o caso de A1 —, com os 8 casos
+  restantes verdes. Worktree removido; árvore de trabalho intacta.
+
+**Não feito / aberto**
+
+- M1 (`localStorage` sem guarda), M2 (`pointerleave` no PTT), B1–B4 seguem abertos, como registrado na
+  execução 7.
+- **Achado pré-existente, observado ao sondar A1 (não corrigido, não introduzido por C1/A1):** em
+  `src/knowledge.js` (`unmetRequirement`), o ramo `detected` considera o requisito satisfeito só por o
+  **termo** aparecer na fala, sem exigir que exista valor; `src/phraseology.js`
+  (`vfr_departure_clearance`) então interpola `destination` sem guarda. Reproduzível no `main` **com e
+  sem** as correções desta execução (turno inicial, sem pergunta pendente), ou seja, é anterior:
+  - `"PT-ABC, VFR, confirme o destino"` → `PT-ABC, saída VFR para undefined, pista 18, QNH 1015.`
+  - `"PT-ABC pretende saída VFR para o setor"` → `PT-ABC, saída VFR para o, pista 18, QNH 1015.`
+
+  Viola a regra de ouro (fala sem dado documentado) e fala "undefined" ao treinando. Direção de
+  correção: exigir **valor** (não só menção) no requisito — `fromInterpretation`/`sessionField` — e/ou
+  a realização recusar-se a compor quando um dado declarado como necessário estiver ausente.
+
+### 9. Fechamento dos achados M1, M2, B1–B5 da revisão pós-merge
+
+Executada sobre os achados que a execução 7 registrou e a 8 não fechou. Todos os itens da lista de
+achados da revisão estão resolvidos; nenhum achado novo foi aberto.
+
+**Entregue**
+
+- **M1 — armazenamento opcional não derruba o app:** `web/app.js` passou a ler e gravar a preferência
+  de modelo por `safeStorage` (get/set/remove com `try/catch`). Onde `localStorage` lança, a sessão
+  segue em "automático" — o simulador continua inteiro.
+- **M2 — a captura termina na soltura, como o F4 exige:** o `pointerleave` do botão foi removido e a
+  rede de segurança passou para `blur` da `window`, que cobre soltar **fora** da janela (onde nenhum
+  `pointerup` chega) sem abortar o hold-to-talk quando o cursor apenas sai do botão. O texto de ajuda
+  do painel ("a gravação termina quando você soltar em qualquer lugar da tela") agora descreve a
+  comportamento real.
+- **B1 — piso ao encurtar o histórico:** `shortenHistoryItem` agora impõe o piso que o próprio
+  docstring prometia (maior entre 40 caracteres e um quarto do original, limitado ao tamanho do item).
+  Uma transmissão de 1.620 caracteres vai a 810 → 405 → descartada; antes, qualquer orçamento entre
+  elas produzia um fragmento que não representava a transmissão.
+- **B2 — expressão morta removida:** `pendingQuestionReply` passou a declarar `sourceIds: []` com o
+  motivo (reformular a pergunta não é citar cobertura; a citação vive em
+  `pendingQuestion.citation`).
+- **B3 — status HTTP do pulo por orçamento:** `context_budget_exceeded` e
+  `llm_context_budget_exceeded` entram no mapa com 503, em vez de cair no 502 de erro desconhecido.
+- **B4 — seletor e indicador sempre concordam:** a preferência persistida é normalizada na leitura
+  contra `FREE_LLM_CANDIDATES`; um id que saiu do catálogo deixa de ser preference e vira "automático"
+  em seletor, indicador e transporte. O listener do seletor passou a ser registrado uma vez, fora do
+  render.
+- **B5 — menção não é valor (achado pré-existente):** `unmetRequirement` passou a exigir o **valor**
+  quando o requisito declara de onde ele vem (`fromInterpretation`/`sessionField`), e o vocabulário
+  falado continua bastando para o requisito que é o próprio valor falado (local do fogo, art. 43
+  Tabela 15). Junto, `matchAfter` em `src/transmission.js` deixou de aceitar artigo/preposição como
+  valor extraído. Antes: `"PT-ABC, VFR, confirme o destino"` falava `saída VFR para undefined` e
+  `"…para o setor"` falava `saída VFR para o`; agora as duas resultam na pergunta documentada do
+  art. 122, e o destino verdadeiro continua sendo falado.
+
+**Testes**
+
+- `test/dom-harness.js` (novo, não é teste): harness de navegador compartilhado — `document`, `window`
+  com captura de listeners, `localStorage` (inclusive **bloqueado**), `SpeechSynthesis` com `onend`
+  controlado pelo teste e microfone falso (`SpeechRecognition`/`getUserMedia`/`MediaRecorder`) para o
+  fluxo do PTT. `loadApp` importa `web/app.js` com uma query por cenário, dando uma instância nova
+  por stub — o equivalente a recarregar a página.
+- `test/app-ptt.test.js` (novo): aperta o PTT, afirma `TRANSMITINDO`, dispara os eventos de saída do
+  botão e afirma que **não** encerram, solta na `window` e afirma `RECEBENDO` → transmissão → fala →
+  `LIVRE`; um segundo caso afirma que `blur` da janela também encerra a captura.
+- `test/app-storage.test.js` (novo): com armazenamento bloqueado, o app inicia, transmite e fala, e
+  trocar a preferência não lança; com preferência fora do catálogo, seletor e indicador concordam, e
+  uma preferência válida continua valendo.
+- `test/model-selection.test.js`: piso do encurtamento (1.620 → 810 → 405 → descartado).
+- `test/interpret-api.test.js`: `llm_context_budget_exceeded` responde 503 com o código no corpo.
+- `test/coverage-taxonomy.test.js`: novo caso de B5 (valor exigido; artigo não é destino; vocabulário
+  falado do fogo continua valendo) e correção do caso de A3.2 — ele afirmava apenas `status` e fixava
+  justamente o defeito: sem `destination` na interpretação, a decisão falava `undefined`.
+- `test/dialogue-state.test.js`: a reformulação da pergunta não cita cobertura (`sourceIds: []`) e a
+  citação está na pergunta pendente.
+
+**Verificação**
+
+- `npm test`: **115/115** (108 + 7 casos novos). `npm run test:dialogue`: **9/9**.
+  `npm run test:dialogue-baseline`: **4/4, zero diferenças** — nenhuma decisão caracterizada no F0
+  mudou com B5, que só afetaRequirement com valor estruturado.
+
+**Não feito / aberto**
+
+- Nada da revisão pós-merge permanece aberto. Continuam as pendências externas já declaradas
+  (reconciliação do corpus com os PDFs, conferência humana de microfone/vozes e validação com
+  instrutor) e a evolução de cobertura (`go_around`/`hold_position`).
 
 ## Próximo passo
 

@@ -149,6 +149,30 @@ test('orçamento de contexto: corte do histórico, teto conservador e pulo sem c
   assert.deepEqual(calls.filter((url) => !url.includes('/models')), [], 'nenhum candidato foi tentado por rede')
 })
 
+test('encurtar o histórico tem piso: fragmento que não representa a transmissão é descartado (B1)', () => {
+  const long = { airport: 'SBGL', recentHistory: [{ origin: 'piloto', text: 'transmissao longa '.repeat(90) }] }
+  const original = long.recentHistory[0].text.length
+  assert.equal(original, 1620)
+
+  // Orçamento que comporta a metade: o item é encurtado pela metade, e o piso é um quarto dele.
+  const cabemMetade = trimSessionContext(long, 220)
+  assert.equal(cabemMetade.recentHistory.length, 1)
+  assert.equal(cabemMetade.recentHistory[0].text.length, Math.floor(original / 2))
+  assert.ok(estimateTokens(cabemMetade) <= 220)
+
+  // Orçamento apertado: ainda vale um quarto da transmissão (405 caracteres), nunca menos.
+  const aperto = trimSessionContext(long, 150)
+  assert.equal(aperto.recentHistory.length, 1)
+  assert.equal(aperto.recentHistory[0].text.length, Math.ceil(original * 0.25))
+
+  // Orçamento que só comportaria um fragmento: o item é descartado — cortar 1620 para 20 não
+  // representa a transmissão —, e os invariantes continuam no contexto.
+  const fragmento = trimSessionContext(long, 100)
+  assert.deepEqual(fragmento.recentHistory, [], 'item descartado em vez de virar fragmento')
+  assert.equal(fragmento.airport, 'SBGL', 'os invariantes continuam no contexto')
+  assert.ok(estimateTokens(fragmento) <= 100)
+})
+
 test('o orçamento de cada candidato vem da janela real do catálogo e é registrado', async () => {
   const { impl } = fakeFetch()
   const provider = createAutoFreeProvider({ env: ENV, fetchImpl: impl })

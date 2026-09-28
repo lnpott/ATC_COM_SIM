@@ -18,6 +18,18 @@ test('endpoint semântico exige POST, JSON e entrada limitada', async () => {
   assert.equal((await call(handler, { body: JSON.stringify({ rawTranscript: '' }) })).statusCode, 400)
 })
 
+test('orçamento de contexto insuficiente tem status próprio, não o genérico do provider (B3)', async () => {
+  // O F6 pula o candidato sem chamada de rede quando nem o contexto operacional cabe. O código do
+  // pulo precisa chegar ao cliente com um status que signifique "provider indisponível por janela",
+  // e não o 502 de erro desconhecido.
+  const provider = { name: 'auto-free', async interpret() { throw Object.assign(new Error('Todos os provedores LLM gratuitos estão indisponíveis.'), { code: 'llm_context_budget_exceeded' }) } }
+  const handler = createInterpretTransmissionHandler({ LLM_PROVIDER: 'auto-free', ZERO_COST_MODE: 'true', ALLOW_PAID_API: 'false' }, { provider })
+  const result = await call(handler, { body: JSON.stringify({ rawTranscript: 'texto', normalizedTranscript: 'texto', language: 'pt', sessionContext: {}, scenarioContext: {} }) })
+
+  assert.equal(result.statusCode, 503)
+  assert.deepEqual(JSON.parse(result.body), { error: 'llm_context_budget_exceeded' })
+})
+
 test('endpoint retorna structured output sem expor configuração', async () => {
   const value = {
     language: 'pt-BR', understood: false, ambiguous: true, confidence: 0.2,

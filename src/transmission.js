@@ -55,9 +55,18 @@ function scoreIntent(tokens, definition, state) {
   return Math.min(1, score)
 }
 
+/**
+ * Palavras que nunca são o **valor** pedido: se o que segue a um rótulo é um artigo ou uma
+ * preposição, não houve valor algum. Sem este filtro, "para o setor" produzia destino "o" e a
+ * autorização falava "saída VFR para o" (B5).
+ */
+const NAO_SAO_VALOR = new Set(['o', 'a', 'os', 'as', 'um', 'uma', 'de', 'do', 'da', 'dos', 'das', 'no', 'na', 'the', 'an', 'to', 'for', 'of'])
+
 function matchAfter(text, labels, valuePattern = '[\\p{L}\\p{N}-]+(?:\\s+[\\p{L}\\p{N}-]+)?') {
   const match = text.match(new RegExp(`\\b(?:${labels.join('|')})\\b\\s+(?:de\\s+|do\\s+|the\\s+)?(${valuePattern})`, 'iu'))
-  return match?.[1]?.trim()
+  const value = match?.[1]?.trim()
+  if (!value || NAO_SAO_VALOR.has(value.toLocaleLowerCase('pt-BR'))) return undefined
+  return value
 }
 
 function extractCallSign(text) {

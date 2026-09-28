@@ -187,13 +187,20 @@ function unmetRequirement(variant, interpretation, state) {
   const requirement = variant.requires
   if (!requirement) return null
 
-  const spoken = FOLD(interpretation.rawText)
-  const detected = (requirement.detect ?? []).some((term) => spoken.includes(FOLD(term)))
   const fromSession = requirement.sessionField ? state?.contexto?.[requirement.sessionField] : undefined
   const fromInterpretation = requirement.fromInterpretation ? interpretation[requirement.fromInterpretation] : undefined
-  const provided = detected || Boolean(fromSession) || Boolean(fromInterpretation)
-  if (provided) return null
-  return requirement
+  // Requisito com **valor estruturado** (destino ou setor, art. 122) só está satisfeito pelo valor:
+  // a simples menção do rótulo não autoriza com o dado presumido — era o que fazia o controlador
+  // falar "saída VFR para undefined" para "VFR, confirme o destino" (B5). Requisito sem valor
+  // estruturado (local do fogo, art. 43 Tabela 15) tem o vocabulário **falado** como valor, e aí a
+  // menção basta.
+  if (requirement.fromInterpretation || requirement.sessionField) {
+    return fromInterpretation ?? fromSession ? null : requirement
+  }
+
+  const spoken = FOLD(interpretation.rawText)
+  const detected = (requirement.detect ?? []).some((term) => spoken.includes(FOLD(term)))
+  return detected ? null : requirement
 }
 
 export { EVIDENCE_RULES, evidenceRule }

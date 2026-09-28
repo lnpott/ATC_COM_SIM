@@ -93,8 +93,16 @@ function isDocumentedRequest(interpretation) {
  * 1. cotejamento, quando há autorização a cotejar e a fala traz marcador documentado;
  * 2. emergência (sempre assume a conversa, exceto se a fala for o próprio cotejamento);
  * 3. resposta à pergunta pendente;
- * 4. nova solicitação operacional documentada;
- * 5. comunicação incompatível: permanece no contexto e o controlador reformula o pedido.
+ * 4. pedido de confirmação ao controlador (só quando a fala **não** responde à pendente);
+ * 5. nova solicitação operacional documentada;
+ * 6. comunicação incompatível: permanece no contexto e o controlador reformula o pedido.
+ *
+ * A resposta à pendente vem **antes** do pedido de confirmação porque o marcador é um termo
+ * procurado por substring: "confirmado"/"confirmo" contêm "confirm", e a pergunta pendente é, ela
+ * própria, um pedido de confirmação ("confirme o destino ou setor…"). Nessa ordem, quem responde
+ * "Confirmado, saída VFR para o setor norte" é reconhecido como resposta; quem pede algo ao
+ * controlador sem o vocabulário da pendente ("Confirme minha autorização") continua caindo no
+ * pedido de confirmação e sendo reformulado.
  */
 /**
  * Resolve a interpretação **no contexto** antes de qualquer recuperação.
@@ -138,8 +146,13 @@ export function evaluateDialogue({ interpretation, state, text }) {
 
   if (isReadback) return { act: DIALOGUE_ACT.READBACK, pending, preempts: true }
   if (interpretation?.emergency) return { act: DIALOGUE_ACT.EMERGENCY, pending, preempts: true }
-  if (REQUEST_MARKERS.some((marker) => folded.includes(marker))) return { act: pending ? DIALOGUE_ACT.UNRELATED : DIALOGUE_ACT.NORMAL, pending, preempts: false }
+  // Resposta à pendente **antes** do pedido de confirmação (`REQUEST_MARKERS`): o marcador é
+  // procurado por substring, então "confirmado"/"confirmo" o satisfazem — e a pendente é, ela
+  // própria, um pedido de confirmação (A1). Quem responde com esse prefixo estaria dizendo que não
+  // respondeu. O pedido ao controlador sem o vocabulário da pendente continua sendo reconhecido
+  // logo abaixo.
   if (pending && answersPending(pending, { interpretation, text, state })) return { act: DIALOGUE_ACT.ANSWER, pending, preempts: true }
+  if (REQUEST_MARKERS.some((marker) => folded.includes(marker))) return { act: pending ? DIALOGUE_ACT.UNRELATED : DIALOGUE_ACT.NORMAL, pending, preempts: false }
   if (pending && isDocumentedRequest(interpretation)) return { act: DIALOGUE_ACT.NEW_REQUEST, pending, preempts: true }
   if (pending) return { act: DIALOGUE_ACT.UNRELATED, pending, preempts: false }
   return { act: DIALOGUE_ACT.NORMAL, pending: null, preempts: false }

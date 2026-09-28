@@ -89,7 +89,9 @@ function pendingQuestionReply({ language, pending, state }) {
     reason: `pending-question:${pending.field}`,
     reasonDetail: `pending-question:${pending.field}`,
     spokenText: composed.text,
-    sourceIds: pending.sources ?? [],
+    // Reformular a pergunta não é citar cobertura: a resposta anterior segue sendo a base, e é ela
+    // que `diagnostics` mostra. A citação da pergunta mora em `pendingQuestion.citation` (B2).
+    sourceIds: [],
     stateUpdate: pendingContextUpdate(pending),
     source: null,
     pendingQuestion: pending,

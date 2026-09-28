@@ -2,7 +2,7 @@ import { normalizePhraseology } from '../src/normalization.js';
 import { processTransmission } from '../src/pipeline.js';
 import { SCENARIOS, getScenario } from '../src/scenarios.js';
 import { ManualSearch } from '../src/search.js';
-import { createRecognitionSession } from '../src/speech.js';
+import { createRecognitionSession, speakTransmission } from '../src/speech.js';
 import { createAudioCaptureSession } from '../src/audio-capture.js';
 import { limitedSessionContext } from '../src/llm/semantic-interpreter.js';
 // O navegador corta o contexto pelo teto conservador antes do transporte; o servidor corta de novo,
@@ -41,7 +41,26 @@ const diagnosticMode = new URLSearchParams(location.search).has('debug');
 if (diagnosticMode) window.__ATC_DEBUG__ = [];
 
 const PREFERRED_MODEL_KEY = 'atc.preferredModelId';
-let preferredModelId = localStorage.getItem(PREFERRED_MODEL_KEY) ?? '';
+/**
+ * A preferência de modelo é opcional: armazenamento bloqueado (contexto sandbox, cookies
+ * desabilitados) não pode derrubar o simulador inteiro (M1). O acesso vai por aqui e a sessão segue
+ * em "automático" quando nada pode ser lido ou gravado.
+ */
+const safeStorage = {
+  get: (key) => { try { return localStorage.getItem(key); } catch { return null; } },
+  set: (key, value) => { try { localStorage.setItem(key, value); } catch { /* sem persistência */ } },
+  remove: (key) => { try { localStorage.removeItem(key); } catch { /* sem persistência */ } },
+};
+/**
+ * A preferência persistida só vale se o modelo ainda existir no catálogo (B4): um id guardado de
+ * outra sessão fazia o seletor mostrar "Automático" e o indicador dizer "preferido: …" ao mesmo
+ * tempo. Normalizar na leitura deixa seletor, indicador e transporte falando do mesmo modelo.
+ */
+let preferredModelId = normalizePreference(safeStorage.get(PREFERRED_MODEL_KEY));
+
+function normalizePreference(value) {
+  return modelCandidates().includes(value) ? value : '';
+}
 
 /**
  * Canal de rádio (F4): `livre` / `transmitindo` / `recebendo`. Os estágios internos do pipeline
@@ -75,10 +94,16 @@ function renderModelSelect() {
     .concat(modelCandidates().map((id) => `<option value="${id}">${id}</option>`))
     .join('');
   select.value = preferredModelId;
+}
+
+/** Uma única vez, fora do render: readicionar a cada render duplicaria a gravação da preferência. */
+function bindModelSelect() {
+  const select = $('#model');
+  if (!select) return;
   select.addEventListener('change', () => {
     preferredModelId = select.value;
-    if (preferredModelId) localStorage.setItem(PREFERRED_MODEL_KEY, preferredModelId);
-    else localStorage.removeItem(PREFERRED_MODEL_KEY);
+    if (preferredModelId) safeStorage.set(PREFERRED_MODEL_KEY, preferredModelId);
+    else safeStorage.remove(PREFERRED_MODEL_KEY);
     renderModelStatus(null);
   });
 }
@@ -289,11 +314,17 @@ function settleChannel() {
 function bindReleaseCapture() {
   window.addEventListener('pointerup', onPointerRelease);
   window.addEventListener('pointercancel', onPointerRelease);
+  // Rede de segurança: soltar **fora** da janela não gera `pointerup` na `window` (M2). O
+  // `pointerleave` do botão que existia antes cobria esse caso, mas também encerrava a captura
+  // quando o cursor apenas saía do botão com o PTT pressionado — o oposto de "apertar, segurar e
+  // soltar em qualquer lugar da tela", que é o requisito do F4.
+  window.addEventListener('blur', onPointerRelease);
 }
 
 function unbindReleaseCapture() {
   window.removeEventListener('pointerup', onPointerRelease);
   window.removeEventListener('pointercancel', onPointerRelease);
+  window.removeEventListener('blur', onPointerRelease);
 }
 
 function onPointerRelease(event) {
@@ -384,12 +415,12 @@ $('#language-toggle').addEventListener('click', () => {
 $('#new-session').addEventListener('click', startScenario);
 $('#sound-toggle').addEventListener('click', () => { voiceEnabled = !voiceEnabled; $('#sound-toggle').textContent = voiceEnabled ? '◉ VOZ' : '○ MUDO'; if (!voiceEnabled) { speechPending = false; settleChannel(); } });
 $('#ptt').addEventListener('pointerdown', (event) => { event.preventDefault(); startPtt(); });
-$('#ptt').addEventListener('pointerleave', () => stopPtt());
 $('#ptt').addEventListener('click', (event) => { if (event.detail === 0) recognitionSession ? stopPtt() : startPtt(); });
 
 try {
   search = await ManualSearch.load(new URL('../atc-simulator-index.json', import.meta.url));
   renderModelSelect();
+  bindModelSelect();
   renderSpeechSupport();
   $('#system-status').classList.add('ready'); $('#system-status').innerHTML = '<span></span> ÍNDICE ONLINE · 374 TRECHOS';
   startScenario();
