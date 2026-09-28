@@ -55,6 +55,10 @@ test('comunicação que não responde à pergunta pendente é reconhecida e o co
 
   assert.equal(offTopic.decision.dialogueAct, DIALOGUE_ACT.UNRELATED)
   assert.equal(offTopic.decision.reason, 'pending-question:destino ou setor')
+  // Reformular a pergunta não é citar cobertura: `sourceIds` fica vazio e a citação vive na pergunta
+  // pendente (B2 — antes lia um campo `sources` que `createPendingQuestion` nunca produzia).
+  assert.deepEqual(offTopic.decision.sourceIds, [])
+  assert.match(offTopic.decision.pendingQuestion.citation, /Art\. 39/)
   assert.equal(offTopic.decision.spokenText, question.decision.spokenText, 'reformula a mesma pergunta documentada')
   assert.equal(readPendingQuestion(offTopic.state).field, 'destino ou setor', 'a pergunta continua pendente')
 })

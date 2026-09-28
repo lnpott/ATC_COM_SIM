@@ -86,14 +86,27 @@ function fits(value, budget, estimate) {
 
 /**
  * Encurta um item de histórico (a "string longa") até ele caber, pela metade a cada passo.
- * Devolve `null` quando nem a versão mais curta útil cabe — o item é descartado em vez de virar
- * um fragmento que não representa a transmissão.
+ * Devolve `null` quando nem a versão mais curta **útil** cabe — o item é descartado em vez de virar
+ * um fragmento que não representa a transmissão (B1).
+ *
+ * O piso é o maior entre 40 caracteres e um quarto do original, limitado ao próprio tamanho: cortar
+ * uma transmissão de 900 caracteres para 20 não a representa, e era o que a frase anterior fazia.
  */
+const MIN_HISTORY_ITEM_CHARS = 40
+const MIN_HISTORY_ITEM_RATIO = 0.25
+
+/** Menor comprimento que ainda representa a transmissão inteira o bastante para ser útil. */
+function usefulLength(length) {
+  return Math.max(1, Math.min(length, Math.max(MIN_HISTORY_ITEM_CHARS, Math.ceil(length * MIN_HISTORY_ITEM_RATIO))))
+}
+
 function shortenHistoryItem(item, base, kept, budget, estimate) {
   if (typeof item?.text !== 'string') return null
+  const floor = usefulLength(item.text.length)
   let text = item.text
-  while (text.length > 1) {
+  while (text.length > floor) {
     text = text.slice(0, Math.floor(text.length / 2))
+    if (text.length < floor) break
     const candidate = { ...item, text }
     if (fits({ ...base, recentHistory: [candidate, ...kept] }, budget, estimate)) return candidate
   }

@@ -16,6 +16,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
+import { loadApp, until } from './dom-harness.js'
 import { prepareSpeechText, speakTransmission } from '../src/speech.js'
 
 const APP_PATH = new URL('../web/app.js', import.meta.url)
@@ -129,77 +130,8 @@ test('a fiação de web/app.js não chama identificador não vinculado (regress�
   assert.deepEqual(unboundCalls(mutated), ['speakTransmission'])
 })
 
-/**
- * `document` e `SpeechSynthesis` mínimos, só com o que `web/app.js` usa. A fala é controlada
- * explicitamente (`finishSpeech`) para que a asserção de canal ocupado seja determinística.
- */
-function installHarness() {
-  const elements = new Map()
-  function makeElement(selector) {
-    const children = new Map()
-    return {
-      selector, className: '', textContent: '', innerHTML: '', value: '', disabled: false, hidden: false, title: '',
-      style: {}, dataset: {}, handlers: {}, appended: [],
-      classList: { add() {}, remove() {} },
-      setAttribute() {}, removeEventListener() {}, focus() {}, remove() {},
-      addEventListener(type, handler) { (this.handlers[type] ??= []).push(handler) },
-      append(child) { this.appended.push(child) },
-      querySelector(childSelector) {
-        if (!children.has(childSelector)) children.set(childSelector, makeElement(`${selector} ${childSelector}`))
-        return children.get(childSelector)
-      },
-    }
-  }
-  const element = (selector) => {
-    if (!elements.has(selector)) elements.set(selector, makeElement(selector))
-    return elements.get(selector)
-  }
-  const speech = {
-    spoken: [], pending: [],
-    speak(utterance) { this.spoken.push(utterance); this.pending.push(utterance) },
-    finishSpeech() { for (const utterance of this.pending.splice(0)) utterance.onend?.() },
-  }
-
-  globalThis.document = { querySelector: element, querySelectorAll: () => [], createElement: () => makeElement('article') }
-  globalThis.window = { addEventListener() {}, removeEventListener() {} }
-  globalThis.location = { search: '' }
-  globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} }
-  globalThis.SpeechSynthesisUtterance = class { constructor(text) { this.text = text } }
-  globalThis.speechSynthesis = { getVoices: () => [], cancel() {}, speak: (utterance) => speech.speak(utterance) }
-  // Sem LLM: a rota responde erro e o pipeline segue pelo caminho determinístico com grounding.
-  globalThis.fetch = async () => new Response(JSON.stringify({ error: 'llm_unavailable' }), { status: 503, headers: { 'content-type': 'application/json' } })
-  // O cenário é escolhido no `<select>`; no stub ele precisa estar definido antes do `startScenario`.
-  element('#scenario').value = 'vfr_local_pt'
-
-  return {
-    element, speech,
-    channelLabel: () => element('#channel-status').textContent,
-    atcoMessages: () => element('#transcript').appended.filter(({ className }) => /\batco\b/.test(className)).map((article) => article.querySelector('p').textContent),
-    submit(text) { element('#transmission').value = text; element('#transmission-form').handlers.submit[0]({ preventDefault() {} }) },
-  }
-}
-
-let appPromise = null
-let harness = null
-function loadApp() {
-  if (!appPromise) {
-    harness = installHarness()
-    // O import é dinâmico de propósito: os globais precisam existir antes de o módulo avaliar.
-    appPromise = import('../web/app.js')
-  }
-  return appPromise
-}
-
-async function until(predicate, message, timeoutMs = 3_000) {
-  const startedAt = Date.now()
-  while (!predicate()) {
-    if (Date.now() - startedAt > timeoutMs) throw new Error(`tempo esgotado: ${message}`)
-    await new Promise((resolve) => setTimeout(resolve, 5))
-  }
-}
-
 test('o app fala a resposta do controlador e só libera o canal no fim da fonia (C1/A3.10)', async () => {
-  await loadApp()
+  const harness = await loadApp({}, 'fonia')
 
   assert.equal(harness.element('#strip-call-sign').textContent, 'PT-ABC', 'o app carregou o índice e iniciou o cenário')
   assert.match(harness.element('#system-status').innerHTML, /ÍNDICE ONLINE/, 'o app carregou o índice e iniciou o cenário')
